@@ -1,0 +1,42 @@
+# Arquivos compilados
+*.o
+*.a
+*.so
+*.exe
+*.test
+*.dll
+
+# Pastas compiladas
+/bin/
+/obj/
+/dist/
+
+# Dependências
+/vendor/
+
+# Arquivos de configuração do editor e sistema
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+
+# Arquivos de ambiente
+.env
+
+# Arquivos de log
+*.log
+
+# Arquivos temporários
+/tmp
+
+# Diretórios que podem conter arquivos binários compilados
+/tmp
+
+# Pastas específicas de ferramentas de teste em Go
+/testdata
+/coverage.out
+/coverage.html
+
+/migrations_prod
+/go_api
