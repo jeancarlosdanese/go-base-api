@@ -1,0 +1,1 @@
+DROP VIEW IF EXISTS "public"."casbin_rules_view";

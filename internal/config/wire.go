@@ -7,7 +7,7 @@ package config
 
 import (
 	"github.com/google/wire"
-	"hyberica.io/go/go-api/internal/app"
+	"github.com/jeancarlosdanese/go-base-api/internal/app"
 )
 
 func InitializeServicesContainer() (*app.ServicesContainer, error) {

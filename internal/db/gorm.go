@@ -7,19 +7,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"hyberica.io/go/go-api/internal/domain/models"
 )
 
 // NewDatabaseConnection cria e retorna uma nova conexão do banco de dados usando GORM.
 // Esta função pode ser usada pelo Wire para injeção de dependência.
 func NewDatabaseConnection() (*gorm.DB, error) {
-	if err := godotenv.Load(); err != nil {
-		log.Printf("Warning: .env file not found")
-	}
-
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=America/Sao_Paulo",
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_USER"),
@@ -34,7 +28,7 @@ func NewDatabaseConnection() (*gorm.DB, error) {
 	}
 
 	// Migrate the schema
-	db.AutoMigrate(&models.Tenant{})
+	// db.AutoMigrate(&models.Entry{}, &models.Permission{}, &models.Role{}, &models.PermissionRole{}, &models.PermissionUser{}, &models.Tenant{}, &models.User{}, &models.UserRole{})
 
 	log.Printf("INFO: DB (Gorm) inicializado com sucesso!")
 	return db, nil

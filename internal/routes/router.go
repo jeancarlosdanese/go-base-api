@@ -3,22 +3,169 @@
 package routes
 
 import (
+	"fmt"
+	"net/http"
+	"strings"
+
+	_ "github.com/jeancarlosdanese/go-base-api/docs"
+
 	"github.com/gin-gonic/gin"
-	"hyberica.io/go/go-api/internal/app" // Ajuste conforme a localização do ServicesContainer
-	handlers_v1 "hyberica.io/go/go-api/internal/handlers_v1"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
+	"github.com/jeancarlosdanese/go-base-api/internal/app"
+	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
+	handlers_v1 "github.com/jeancarlosdanese/go-base-api/internal/handlers_v1"
+	"github.com/jeancarlosdanese/go-base-api/internal/services"
 )
 
 // SetupRouter agora aceita ServicesContainer como argumento.
 func SetupRouter(r *gin.Engine, sc *app.ServicesContainer) {
+	// Setup da rota do Swagger
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	// Definindo o grupo de rotas para a versão 1 da API
 	v1 := r.Group("/api/v1")
 
-	// Configurando as rotas de tenants usando o handler e o serviço de tenants
+	// Configuração de rotas não autenticadas
+	auth := v1.Group("/auth")
 	{
-		tenantsHandler := handlers_v1.NewTenantsHandler(sc.TenantService)
-		tenantsGroup := v1.Group("/tenants")
-		tenantsHandler.RegisterRoutes(tenantsGroup)
+		authHandler := handlers_v1.NewAuthHandler(sc.UserService, sc.TokenService, sc.TokenRedisService)
+		auth.POST("/login", authHandler.Login) // Registra diretamente a rota POST /login no grupo /auth
 	}
 
-	// Adicione mais configurações de rotas para outros handlers conforme necessário
+	// Middleware de autenticação que é aplicado a todas as rotas que necessitam autenticação
+	secured := v1.Group("/")
+	secured.Use(AuthMiddleware(sc.TokenService, sc.TokenRedisService))
+	{
+		// Grupo para gestão de tenants
+		tenantsGroup := secured.Group("/tenants")
+		// tenantsGroup.Use(RoleMiddleware("administration")) // Apenas usuários com role "administration"
+		tenantsGroup.Use(PermissionMiddleware()) // Apenas usuários com role "administration"
+		{
+			tenantsHandler := handlers_v1.NewTenantsHandler(sc.TenantService)
+			tenantsGroup.GET("/", tenantsHandler.GetAll)
+			tenantsGroup.POST("/", tenantsHandler.Create)
+		}
+
+		usersHandler := handlers_v1.NewUsersHandler(sc.UserService)
+		usersGroup := secured.Group("/users")
+		// Aqui você pode adicionar middlewares específicos para /users se necessário
+		usersHandler.RegisterRoutes(usersGroup)
+	}
+}
+
+func extractToken(c *gin.Context) string {
+	authHeader := c.GetHeader("Authorization")
+	// Divide o cabeçalho em partes e verifica se é um token tipo Bearer
+	parts := strings.Split(authHeader, " ")
+	if len(parts) == 2 && parts[0] == "Bearer" {
+		return parts[1]
+	}
+	return ""
+}
+
+func AuthMiddleware(tokenService *services.TokenService, tokenRedisService *services.TokenRedisService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenString := extractToken(c) // Função auxiliar para extrair o token
+		if tokenString == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token não fornecido"})
+			c.Abort()
+			return
+		}
+
+		_, err := tokenService.ValidateToken(tokenString)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token inválido: " + err.Error()})
+			c.Abort()
+			return
+		}
+
+		// Tenta recuperar as informações do usuário do Redis
+		user, err := tokenRedisService.GetUserFromToken(tokenString)
+		if err != nil || user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Falha ao recuperar informações do usuário"})
+			c.Abort()
+			return
+		}
+
+		// Configura o contexto com o usuário para uso posterior
+		c.Set("user", user)
+		c.Next() // Prosseguir com a próxima função no pipeline
+	}
+}
+
+// RoleMiddleware verifica se o usuário possui as roles necessárias.
+func RoleMiddleware(requiredRoles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user, exists := c.Get("user")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não autenticado"})
+			c.Abort()
+			return
+		}
+
+		// Asumindo que a estrutura User tem um campo Roles que é um slice de strings.
+		userInfo := user.(*models.UserDataRedis)
+		isValidRole := false
+		for _, role := range userInfo.Roles {
+			fmt.Println("ROLE: ", role)
+
+			for _, requiredRole := range requiredRoles {
+				if role == requiredRole {
+					isValidRole = true
+					break
+				}
+			}
+			if isValidRole {
+				break
+			}
+		}
+
+		if !isValidRole {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Acesso negado - role inválida"})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
+// PermissionMiddleware verifica permissões específicas para ações ou recursos.
+func PermissionMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user, exists := c.Get("user")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não autenticado"})
+			c.Abort()
+			return
+		}
+
+		// Supõe que o User tem um campo Permissions que é um slice de strings.
+		userInfo := user.(*models.UserDataRedis)
+
+		// Define o objeto e ação com base na URL e no método HTTP
+		obj := c.Request.URL.Path
+		act := c.Request.Method
+		fmt.Println("PERMISSION: ", obj, act)
+		requiredPermission := "tenants:list"
+
+		hasPermission := false
+		for _, permission := range userInfo.Permissions {
+			fmt.Println(permission)
+			if permission == requiredPermission {
+				hasPermission = true
+				break
+			}
+		}
+
+		if !hasPermission {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Acesso negado - permissão insuficiente"})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
 }

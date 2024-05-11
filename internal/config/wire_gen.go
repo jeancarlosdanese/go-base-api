@@ -7,7 +7,7 @@
 package config
 
 import (
-	"hyberica.io/go/go-api/internal/app"
+	"github.com/jeancarlosdanese/go-base-api/internal/app"
 )
 
 // Injectors from wire.go:

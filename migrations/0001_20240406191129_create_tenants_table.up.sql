@@ -1,5 +1,7 @@
 -- This script only contains the table creation statements and does not fully represent the table in the database. Do not use it as a backup.
+DROP TYPE IF EXISTS "public"."person_type";
 CREATE TYPE "public"."person_type" AS ENUM ('FISICA', 'JURIDICA');
+DROP TYPE IF EXISTS "public"."status_type";
 CREATE TYPE "public"."status_type" AS ENUM ('ATIVO', 'INATIVO');
 -- Table Definition
 CREATE TABLE "public"."tenants" (
@@ -26,7 +28,7 @@ CREATE TABLE "public"."tenants" (
     "status" "public"."status_type" NOT NULL DEFAULT 'ATIVO'::status_type,
     PRIMARY KEY ("id")
 );
--- Indices Index
-CREATE UNIQUE INDEX uni_tenants_subdomain ON public.tenants USING btree (subdomain);
-CREATE UNIQUE INDEX uni_tenants_domain ON public.tenants USING btree (domain);
+-- Indices
+CREATE UNIQUE INDEX uni_tenants_cpf_cnpj ON public.tenants USING btree (cpf_cnpj);
+CREATE UNIQUE INDEX uni_tenants_subdomain_domain ON public.tenants USING btree (subdomain, domain);
 CREATE INDEX idx_tenants_deleted_at ON public.tenants USING btree (deleted_at);

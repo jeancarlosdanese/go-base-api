@@ -54,3 +54,21 @@ go run ./cmd/go_api
 ```bash
 go test ./...
 ```
+
+## Construído com
+
+- [Go](https://golang.org/) - A linguagem de programação usada.
+- [GORM](https://gorm.io/) - ORM usado.
+- [golang-migrate/migrate](https://github.com/golang-migrate/migrate) - Ferramenta de migração de banco de dados.
+- [Swaggo](https://github.com/swaggo/swag), uma ferramenta que analisa os comentários do código Go e gera uma documentação de API Swagger.
+
+### Licenças das Dependências
+
+Abaixo está a distribuição das licenças das dependências do projeto:
+
+| Licença        | Porcentagem |
+|----------------|-------------|
+| Apache-2.0     | 10,53%      |
+| BSD-3-Clause   | 21,05%      |
+| MIT            | 68,42%      |
+| **Total Geral**| **100,00%** |

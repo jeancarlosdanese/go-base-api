@@ -5,12 +5,29 @@ package main
 import (
 	"log"
 
+	"github.com/jeancarlosdanese/go-base-api/internal/config" // Importa o pacote onde InitializeServicesContainer está definido
+	"github.com/jeancarlosdanese/go-base-api/internal/domain/enums"
+	"github.com/jeancarlosdanese/go-base-api/internal/routes" // Importa o pacote de rotas
+
 	"github.com/gin-gonic/gin"
-	"hyberica.io/go/go-api/internal/config" // Importa o pacote onde InitializeServicesContainer está definido
-	"hyberica.io/go/go-api/internal/routes" // Importa o pacote de rotas
 )
 
+// @title 							Swagger Go Base API
+// @version 						1.0
+// @description 					This is a Go Base API.
+// @termsOfService 					github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
+// @contact.name 					Go Base API Support
+// @contact.url 					github.com/jeancarlosdanese/go-base-api
+// @license.name 					MIT
+// @license.url 					github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
+// @host 							localhost:5001
+// @SecurityDefinitions.apiKey 		Bearer
+// @in header
+// @name 							Authorization
+// @BasePath 						/api/v1/
 func main() {
+	enums.Initialize() // Garante que tudo está configurado antes de usar.
+
 	r := gin.Default()
 
 	// Inicializa o container de serviços usando o Google Wire.
@@ -24,7 +41,7 @@ func main() {
 	routes.SetupRouter(r, sc)
 
 	// Inicializa o servidor
-	if err := r.Run(); err != nil {
+	if err := r.Run(":5001"); err != nil {
 		log.Fatalf("Failed to run server: %v", err)
 	}
 }

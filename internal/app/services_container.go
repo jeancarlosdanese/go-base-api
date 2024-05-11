@@ -3,28 +3,62 @@
 package app
 
 import (
+	"log"
+	"os"
+	"time"
+
+	// Import correto
+	"github.com/jeancarlosdanese/go-base-api/internal/db"
+	"github.com/jeancarlosdanese/go-base-api/internal/repositories"
+	"github.com/jeancarlosdanese/go-base-api/internal/services"
+	"github.com/joho/godotenv"
 	"gorm.io/gorm"
-	"hyberica.io/go/go-api/internal/db"
-	"hyberica.io/go/go-api/internal/repositories"
-	"hyberica.io/go/go-api/internal/services"
 )
 
 type ServicesContainer struct {
-	TenantService services.TenantService
-	DB            *gorm.DB
+	CasbinService     *services.CasbinService
+	TokenService      *services.TokenService
+	TenantService     *services.TenantService
+	UserService       *services.UserService
+	RedisService      *services.RedisService
+	TokenRedisService *services.TokenRedisService
+	DB                *gorm.DB
 }
 
 func NewServicesContainer() (*ServicesContainer, error) {
-	db, err := db.NewDatabaseConnection()
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Warning: .env file not found")
+	}
+
+	gormDB, err := db.NewDatabaseConnection()
 	if err != nil {
 		return nil, err
 	}
 
-	tenantRepo := repositories.NewGormTenantRepository(db) // Assume que agora aceita *gorm.DB
-	tenantService := services.NewTenantService(tenantRepo)
+	// Inicializa o Redis
+	db.InitializeRedis()
+	redisService := services.NewRedisService()
+	tokenRedisService := services.NewTokenRedisService(redisService)
+
+	casbinService, err := services.NewCasbinService(gormDB)
+	if err != nil {
+		return nil, err
+	}
+	tokenService := services.NewTokenService(os.Getenv("JWT_SECRET_KEY"), time.Hour*1, time.Hour*24*90)
+
+	tenantsRepo := repositories.NewTenantRepository(gormDB)
+	tenantsService := services.NewTenantService(tenantsRepo)
+
+	usersRepo := repositories.NewUserRepository(gormDB)
+	usersService := services.NewUserService(usersRepo)
 
 	return &ServicesContainer{
-		TenantService: tenantService,
-		DB:            db,
+		CasbinService:     casbinService,
+		TokenService:      tokenService,
+		TenantService:     tenantsService,
+		UserService:       usersService,
+		RedisService:      redisService,
+		TokenRedisService: tokenRedisService,
+		DB:                gormDB,
 	}, nil
 }

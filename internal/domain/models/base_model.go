@@ -16,3 +16,7 @@ type BaseModel struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 }
+
+type HTTPError struct {
+	Message string `json:"message"`
+}

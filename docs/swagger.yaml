@@ -1,0 +1,578 @@
+definitions:
+  gin.H:
+    additionalProperties: {}
+    type: object
+  github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType:
+    enum:
+    - FISICA
+    - JURIDICA
+    type: string
+    x-enum-varnames:
+    - Fisica
+    - Juridica
+  github_com_jeancarlosdanese_go-base-api_internal_domain_enums.StatusType:
+    enum:
+    - ATIVO
+    - INATIVO
+    type: string
+    x-enum-varnames:
+    - Ativo
+    - Inativo
+  github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError:
+    properties:
+      message:
+        type: string
+    type: object
+  github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/gorm.DeletedAt'
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      roles:
+        items:
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role'
+        type: array
+      slug:
+        type: string
+      updated_at:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User'
+        type: array
+    required:
+    - name
+    - slug
+    type: object
+  github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/gorm.DeletedAt'
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission'
+        type: array
+      slug:
+        type: string
+      updated_at:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User'
+        type: array
+    required:
+    - name
+    - slug
+    type: object
+  github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant:
+    properties:
+      cell_phone:
+        type: string
+      cep:
+        type: string
+      city:
+        type: string
+      complement:
+        type: string
+      cpf_cnpj:
+        type: string
+      created_at:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/gorm.DeletedAt'
+      domain:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      ie:
+        type: string
+      name:
+        type: string
+      neighborhood:
+        type: string
+      number:
+        type: string
+      phone:
+        type: string
+      state:
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.StatusType'
+        enum:
+        - ATIVO
+        - INATIVO
+      street:
+        type: string
+      subdomain:
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType'
+        enum:
+        - FISICA
+        - JURIDICA
+      updated_at:
+        type: string
+    required:
+    - name
+    - status
+    - subdomain
+    - type
+    type: object
+  github_com_jeancarlosdanese_go-base-api_internal_domain_models.User:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/gorm.DeletedAt'
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      roles:
+        items:
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role'
+        type: array
+      special_permissions:
+        items:
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission'
+        type: array
+      tenant_id:
+        type: string
+      thumbnail:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+host: localhost:5001
+info:
+  contact:
+    name: Go Base API Support
+    url: github.com/jeancarlosdanese/go-base-api
+  description: This is a Go Base API.
+  license:
+    name: MIT
+    url: github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
+  termsOfService: github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
+  title: Swagger Go Base API
+  version: "1.0"
+paths:
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Loga um usuário usando email e senha
+      parameters:
+      - description: Email do Usuário
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Senha do Usuário
+        in: formData
+        name: password
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token gerado com sucesso
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Erro de autenticação
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Loga um usuário
+      tags:
+      - Auth
+  /api/v1/tenants:
+    get:
+      consumes:
+      - application/json
+      description: Busca todos os Tenants
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de Tenants
+          schema:
+            items:
+              $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant'
+            type: array
+        "500":
+          description: Erro Interno do Servidor
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+      summary: Busca todos os Tenants
+      tags:
+      - Tenants
+    post:
+      consumes:
+      - application/json
+      description: Adiciona um novo Tenant ao sistema
+      parameters:
+      - description: Informações do Tenant
+        in: body
+        name: tenant
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tenant Criado
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant'
+        "400":
+          description: Erro de Formato de Solicitação
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+        "500":
+          description: Erro Interno do Servidor
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+      summary: Cria um novo Tenant
+      tags:
+      - Tenants
+  /api/v1/tenants/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Exclui um Tenant com base no ID fornecido
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Mensagem de sucesso
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: ID Inválido
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+        "500":
+          description: Erro Interno do Servidor
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+      summary: Exclui um Tenant
+      tags:
+      - Tenants
+    get:
+      consumes:
+      - application/json
+      description: Busca Tenant por ID
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tenant
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant'
+        "400":
+          description: Invalid UUID format
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+        "404":
+          description: Tenant not found
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+      summary: Busca Tenant por ID
+      tags:
+      - Tenants
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza parcialmente um Tenant existente com base no ID fornecido
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados atualizáveis do Tenant
+        in: body
+        name: tenant
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Mensagem de sucesso
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: ID Inválido ou Erro de Formato de Solicitação
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+        "500":
+          description: Erro Interno do Servidor
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+      summary: Atualiza parcialmente um Tenant existente
+      tags:
+      - Tenants
+    put:
+      consumes:
+      - application/json
+      description: Atualiza um Tenant existente com base no ID fornecido
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados do Tenant
+        in: body
+        name: tenant
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tenant Atualizado
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant'
+        "400":
+          description: ID Inválido ou Erro de Formato de Solicitação
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+        "500":
+          description: Erro Interno do Servidor
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+      summary: Atualiza um Tenant existente
+      tags:
+      - Tenants
+  /api/v1/users:
+    get:
+      consumes:
+      - application/json
+      description: Busca todos os Users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de Users
+          schema:
+            items:
+              $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User'
+            type: array
+        "500":
+          description: Erro Interno do Servidor
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+      summary: Busca todos os Users
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: Adiciona um novo User ao sistema
+      parameters:
+      - description: Informações do User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User Criado
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User'
+        "400":
+          description: Erro de Formato de Solicitação
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+        "500":
+          description: Erro Interno do Servidor
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+      summary: Cria um novo User
+      tags:
+      - Users
+  /api/v1/users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Exclui um User com base no ID fornecido
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Mensagem de sucesso
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: ID Inválido
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+        "500":
+          description: Erro Interno do Servidor
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+      summary: Exclui um User
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      description: Busca User por ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User'
+        "400":
+          description: Invalid UUID format
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+      summary: Busca User por ID
+      tags:
+      - Users
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza parcialmente um User existente com base no ID fornecido
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados atualizáveis do User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Mensagem de sucesso
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: ID Inválido ou Erro de Formato de Solicitação
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+        "500":
+          description: Erro Interno do Servidor
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+      summary: Atualiza parcialmente um User existente
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Atualiza um User existente com base no ID fornecido
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados do User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User Atualizado
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User'
+        "400":
+          description: ID Inválido ou Erro de Formato de Solicitação
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+        "500":
+          description: Erro Interno do Servidor
+          schema:
+            $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError'
+      summary: Atualiza um User existente
+      tags:
+      - Users
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
