@@ -13,7 +13,7 @@ import (
 )
 
 // @title 							Swagger Go Base API
-// @version 						1.0
+// @version 						1.0.1
 // @description 					This is a Go Base API.
 // @termsOfService 					github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
 // @contact.name 					Go Base API Support

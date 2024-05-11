@@ -2,6 +2,20 @@ definitions:
   gin.H:
     additionalProperties: {}
     type: object
+  github_com_jeancarlosdanese_go-base-api_internal_domain_enums.ActionType:
+    enum:
+    - list
+    - store
+    - show
+    - update
+    - delete
+    type: string
+    x-enum-varnames:
+    - List
+    - Store
+    - Show
+    - Update
+    - Delete
   github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType:
     enum:
     - FISICA
@@ -18,6 +32,17 @@ definitions:
     x-enum-varnames:
     - Ativo
     - Inativo
+  github_com_jeancarlosdanese_go-base-api_internal_domain_models.Entry:
+    properties:
+      id:
+        type: integer
+      name:
+        description: Nome do recurso, único e não nulo
+        type: string
+    required:
+    - id
+    - name
+    type: object
   github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError:
     properties:
       message:
@@ -25,59 +50,42 @@ definitions:
     type: object
   github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission:
     properties:
-      created_at:
-        type: string
-      deleted_at:
-        $ref: '#/definitions/gorm.DeletedAt'
-      description:
-        type: string
+      action:
+        $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.ActionType'
+      entry:
+        allOf:
+        - $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Entry'
+        description: constraints
+      entry_id:
+        type: integer
       id:
-        type: string
-      name:
-        type: string
+        type: integer
       roles:
         items:
           $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role'
         type: array
-      slug:
-        type: string
-      updated_at:
-        type: string
       users:
         items:
           $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User'
         type: array
     required:
-    - name
-    - slug
+    - entry_id
+    - id
     type: object
   github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role:
     properties:
-      created_at:
-        type: string
-      deleted_at:
-        $ref: '#/definitions/gorm.DeletedAt'
-      description:
-        type: string
       id:
-        type: string
+        type: integer
       name:
+        description: Nome do recurso, único e não nulo
         type: string
       permissions:
         items:
           $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission'
         type: array
-      slug:
-        type: string
-      updated_at:
-        type: string
-      users:
-        items:
-          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User'
-        type: array
     required:
+    - id
     - name
-    - slug
     type: object
   github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant:
     properties:
@@ -114,21 +122,13 @@ definitions:
       state:
         type: string
       status:
-        allOf:
-        - $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.StatusType'
-        enum:
-        - ATIVO
-        - INATIVO
+        $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.StatusType'
       street:
         type: string
       subdomain:
         type: string
       type:
-        allOf:
-        - $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType'
-        enum:
-        - FISICA
-        - JURIDICA
+        $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType'
       updated_at:
         type: string
     required:
@@ -157,6 +157,10 @@ definitions:
         items:
           $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission'
         type: array
+      tenant:
+        allOf:
+        - $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant'
+        description: constraints
       tenant_id:
         type: string
       thumbnail:
@@ -185,7 +189,7 @@ info:
     url: github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
   termsOfService: github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
   title: Swagger Go Base API
-  version: "1.0"
+  version: 1.0.1
 paths:
   /api/v1/auth/login:
     post:

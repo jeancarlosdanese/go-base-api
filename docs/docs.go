@@ -606,6 +606,23 @@ const docTemplate = `{
             "type": "object",
             "additionalProperties": {}
         },
+        "github_com_jeancarlosdanese_go-base-api_internal_domain_enums.ActionType": {
+            "type": "string",
+            "enum": [
+                "list",
+                "store",
+                "show",
+                "update",
+                "delete"
+            ],
+            "x-enum-varnames": [
+                "List",
+                "Store",
+                "Show",
+                "Update",
+                "Delete"
+            ]
+        },
         "github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType": {
             "type": "string",
             "enum": [
@@ -628,6 +645,22 @@ const docTemplate = `{
                 "Inativo"
             ]
         },
+        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.Entry": {
+            "type": "object",
+            "required": [
+                "id",
+                "name"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "Nome do recurso, único e não nulo",
+                    "type": "string"
+                }
+            }
+        },
         "github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError": {
             "type": "object",
             "properties": {
@@ -639,36 +672,32 @@ const docTemplate = `{
         "github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission": {
             "type": "object",
             "required": [
-                "name",
-                "slug"
+                "entry_id",
+                "id"
             ],
             "properties": {
-                "created_at": {
-                    "type": "string"
+                "action": {
+                    "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.ActionType"
                 },
-                "deleted_at": {
-                    "$ref": "#/definitions/gorm.DeletedAt"
+                "entry": {
+                    "description": "constraints",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Entry"
+                        }
+                    ]
                 },
-                "description": {
-                    "type": "string"
+                "entry_id": {
+                    "type": "integer"
                 },
                 "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "roles": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role"
                     }
-                },
-                "slug": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
                 },
                 "users": {
                     "type": "array",
@@ -681,41 +710,21 @@ const docTemplate = `{
         "github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role": {
             "type": "object",
             "required": [
-                "name",
-                "slug"
+                "id",
+                "name"
             ],
             "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "deleted_at": {
-                    "$ref": "#/definitions/gorm.DeletedAt"
-                },
-                "description": {
-                    "type": "string"
-                },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "name": {
+                    "description": "Nome do recurso, único e não nulo",
                     "type": "string"
                 },
                 "permissions": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission"
-                    }
-                },
-                "slug": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User"
                     }
                 }
             }
@@ -778,15 +787,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "enum": [
-                        "ATIVO",
-                        "INATIVO"
-                    ],
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.StatusType"
-                        }
-                    ]
+                    "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.StatusType"
                 },
                 "street": {
                     "type": "string"
@@ -795,15 +796,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
-                    "enum": [
-                        "FISICA",
-                        "JURIDICA"
-                    ],
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType"
-                        }
-                    ]
+                    "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType"
                 },
                 "updated_at": {
                     "type": "string"
@@ -839,6 +832,14 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission"
                     }
+                },
+                "tenant": {
+                    "description": "constraints",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant"
+                        }
+                    ]
                 },
                 "tenant_id": {
                     "type": "string"
@@ -878,7 +879,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "1.0.1",
 	Host:             "localhost:5001",
 	BasePath:         "",
 	Schemes:          []string{},
