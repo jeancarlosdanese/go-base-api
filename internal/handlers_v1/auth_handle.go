@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
+	"github.com/jeancarlosdanese/go-base-api/internal/logging"
 	"github.com/jeancarlosdanese/go-base-api/internal/services"
 )
 
@@ -60,22 +61,28 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	user, err := h.userService.Authenticate(c.Request.Context(), loginForm.Email, loginForm.Password, origin)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Credenciais inválidas"})
+		logging.WarnLogger.Printf("Erro ao autenticar usuário: %v", err)
+		if err.Error() == "usuário ou origem não encontrado" || err.Error() == "senha inválida" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Credenciais inválidas"})
+		} else {
+			logging.ErrorLogger.Printf("Erro interno do servidor ao autenticar usuário: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno do servidor"})
+		}
 		return
 	}
 
-	// Extrai roles e policies especiais usando métodos de receptor
 	roles := user.ExtractRoles()
 	policies := user.ExtractPolicies()
 
 	accessToken, refreshToken, err := h.tokenService.CreateTokens(user.ID, roles, policies)
 	if err != nil {
+		logging.ErrorLogger.Printf("Falha ao gerar tokens para o usuário: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Falha ao gerar tokens"})
 		return
 	}
 
-	// Salva as informações do usuário no Redis
 	if err := h.tokenRedisService.SaveUserTokenInfo(user, accessToken, refreshToken); err != nil {
+		logging.ErrorLogger.Printf("Falha ao salvar informações do usuário no Redis: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Falha ao salvar informações do usuário no Redis"})
 		return
 	}

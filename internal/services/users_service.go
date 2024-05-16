@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
+	"github.com/jeancarlosdanese/go-base-api/internal/logging"
 	"github.com/jeancarlosdanese/go-base-api/internal/repositories"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -26,14 +27,15 @@ func NewUserService(repo repositories.UserRepository) *UserService {
 
 // Authenticate verifica as credenciais de um usuário.
 func (s *UserService) Authenticate(ctx context.Context, email, password, origin string) (*models.User, error) {
-	user, err := s.Repo.FindByEmail(ctx, email, origin) // Certifique-se que FindByEmail está implementado em UserRepository
+	user, err := s.Repo.FindByEmail(ctx, email, origin)
 	if err != nil {
-		return nil, errors.New("usuário não encontrado")
+		logging.InfoLogger.Printf("Erro ao buscar usuário por email e origem: %v", err)
+		return nil, err
 	}
 
-	// Comparar a senha criptografada com a senha fornecida
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
+		logging.InfoLogger.Printf("Senha inválida para o usuário: %s", email)
 		return nil, errors.New("senha inválida")
 	}
 

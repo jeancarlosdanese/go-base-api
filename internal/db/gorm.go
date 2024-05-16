@@ -24,7 +24,7 @@ func NewDatabaseConnection() (*gorm.DB, error) {
 	)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info), // Alterar para logger.Info para mais detalhes
+		Logger: logger.Default.LogMode(logger.Error), // Alterar para logger.Info para mais detalhes
 	})
 	if err != nil {
 		return nil, err
