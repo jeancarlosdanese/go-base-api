@@ -3,7 +3,6 @@
 package handlers_v1
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -47,14 +46,11 @@ func (h *AuthHandler) RegisterRoutes(router *gin.RouterGroup) {
 // @Failure 400 {object} map[string]string "Erro de autenticação"
 // @Router /api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
-	origin, exists := c.Get("origin")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não autenticado"})
-		c.Abort()
+	origin := c.Request.Header.Get("Origin")
+	if origin == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Origem não fornecida"})
 		return
 	}
-
-	fmt.Println("ORIGIN: ", origin)
 
 	var loginForm models.LoginForm
 	if err := c.ShouldBind(&loginForm); err != nil {
@@ -62,7 +58,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.Authenticate(c.Request.Context(), loginForm.Email, loginForm.Password)
+	user, err := h.userService.Authenticate(c.Request.Context(), loginForm.Email, loginForm.Password, origin)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Credenciais inválidas"})
 		return

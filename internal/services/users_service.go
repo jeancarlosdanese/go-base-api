@@ -20,13 +20,13 @@ func NewUserService(repo repositories.UserRepository) *UserService {
 	return &UserService{BaseService: baseService}
 }
 
-func (s *UserService) FindByEmail(ctx context.Context, email string) (*models.User, error) {
-	return s.Repo.FindByEmail(ctx, email)
-}
+// func (s *UserService) FindByEmail(ctx context.Context, email string) (*models.User, error) {
+// 	return s.Repo.FindByEmail(ctx, email)
+// }
 
 // Authenticate verifica as credenciais de um usuário.
-func (s *UserService) Authenticate(ctx context.Context, email, password string) (*models.User, error) {
-	user, err := s.Repo.FindByEmail(ctx, email) // Certifique-se que FindByEmail está implementado em UserRepository
+func (s *UserService) Authenticate(ctx context.Context, email, password, origin string) (*models.User, error) {
+	user, err := s.Repo.FindByEmail(ctx, email, origin) // Certifique-se que FindByEmail está implementado em UserRepository
 	if err != nil {
 		return nil, errors.New("usuário não encontrado")
 	}

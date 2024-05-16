@@ -3,7 +3,6 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -29,7 +28,6 @@ func SetupRouter(r *gin.Engine, sc *app.ServicesContainer) {
 
 	// Configuração de rotas não autenticadas
 	auth := v1.Group("/auth")
-	auth.Use(OriginMiddleware())
 	{
 		authHandler := handlers_v1.NewAuthHandler(sc.UserService, sc.TokenService, sc.TokenRedisService)
 		auth.POST("/login", authHandler.Login) // Registra diretamente a rota POST /login no grupo /auth
@@ -123,7 +121,6 @@ func RoleMiddleware(requiredRoles ...string) gin.HandlerFunc {
 		userInfo := user.(*models.UserDataRedis)
 		isValidRole := false
 		for _, role := range userInfo.Roles {
-			fmt.Println("ROLE: ", role)
 
 			for _, requiredRole := range requiredRoles {
 				if role == requiredRole {
