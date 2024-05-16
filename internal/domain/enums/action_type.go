@@ -1,4 +1,4 @@
-// internal/domain/enums/action_type.go
+// internal/domain/enums/action_name.go
 
 package enums
 
@@ -12,20 +12,20 @@ import (
 type ActionType string
 
 const (
-	List   ActionType = "list"
-	Store  ActionType = "store"
-	Show   ActionType = "show"
-	Update ActionType = "update"
-	Delete ActionType = "delete"
+	GET    ActionType = "GET"
+	POST   ActionType = "POST"
+	PUT    ActionType = "PUT"
+	PATCH  ActionType = "PATCH"
+	DELETE ActionType = "DELETE"
 )
 
 // ValidActionTypes mapeia as ações válidas para validação rápida.
 var ValidActionTypes = map[ActionType]bool{
-	List:   true,
-	Store:  true,
-	Show:   true,
-	Update: true,
-	Delete: true,
+	GET:    true,
+	POST:   true,
+	PUT:    true,
+	PATCH:  true,
+	DELETE: true,
 }
 
 // validateActionType verifica se o valor do ActionType é um dos definidos como válidos.

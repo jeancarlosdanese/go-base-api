@@ -44,6 +44,7 @@ func NewServicesContainer() (*ServicesContainer, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	tokenService := services.NewTokenService(os.Getenv("JWT_SECRET_KEY"), time.Hour*1, time.Hour*24*90)
 
 	tenantsRepo := repositories.NewTenantRepository(gormDB)

@@ -14,7 +14,7 @@ type Token struct {
 	RefreshToken *string   `json:"refreshToken"`
 	User         TokenUser `json:"user"`
 	Roles        []string  `json:"roles"`
-	Permissions  []string  `json:"permissions"`
+	Policies     []string  `json:"policies"`
 }
 
 type TokenUser struct {

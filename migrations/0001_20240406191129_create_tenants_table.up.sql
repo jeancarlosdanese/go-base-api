@@ -32,3 +32,7 @@ CREATE TABLE "public"."tenants" (
 CREATE UNIQUE INDEX uni_tenants_cpf_cnpj ON public.tenants USING btree (cpf_cnpj);
 CREATE UNIQUE INDEX uni_tenants_subdomain_domain ON public.tenants USING btree (subdomain, domain);
 CREATE INDEX idx_tenants_deleted_at ON public.tenants USING btree (deleted_at);
+-- Indices
+CREATE UNIQUE INDEX uni_tenants_cpf_cnpj ON public.tenants USING btree (cpf_cnpj);
+CREATE UNIQUE INDEX uni_tenants_subdomain_domain ON public.tenants USING btree (subdomain, domain);
+CREATE INDEX idx_tenants_deleted_at ON public.tenants USING btree (deleted_at);

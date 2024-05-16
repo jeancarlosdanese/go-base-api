@@ -606,23 +606,6 @@ const docTemplate = `{
             "type": "object",
             "additionalProperties": {}
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_enums.ActionType": {
-            "type": "string",
-            "enum": [
-                "list",
-                "store",
-                "show",
-                "update",
-                "delete"
-            ],
-            "x-enum-varnames": [
-                "List",
-                "Store",
-                "Show",
-                "Update",
-                "Delete"
-            ]
-        },
         "github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType": {
             "type": "string",
             "enum": [
@@ -645,7 +628,7 @@ const docTemplate = `{
                 "Inativo"
             ]
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.Entry": {
+        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.Endpoint": {
             "type": "object",
             "required": [
                 "id",
@@ -669,41 +652,63 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission": {
+        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyRole": {
             "type": "object",
             "required": [
-                "entry_id",
-                "id"
+                "actions",
+                "endpoint_id",
+                "role_id"
             ],
             "properties": {
-                "action": {
-                    "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.ActionType"
+                "actions": {
+                    "type": "string"
                 },
-                "entry": {
-                    "description": "constraints",
+                "endpoint": {
+                    "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Endpoint"
+                },
+                "endpoint_id": {
+                    "type": "integer"
+                },
+                "role": {
+                    "description": "// constraints",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Entry"
+                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role"
                         }
                     ]
                 },
-                "entry_id": {
+                "role_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyUser": {
+            "type": "object",
+            "required": [
+                "actions",
+                "endpoint_id",
+                "user_id"
+            ],
+            "properties": {
+                "actions": {
+                    "type": "string"
+                },
+                "endpoint": {
+                    "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Endpoint"
+                },
+                "endpoint_id": {
                     "type": "integer"
                 },
-                "id": {
-                    "type": "integer"
+                "user": {
+                    "description": "// constraints",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User"
+                        }
+                    ]
                 },
-                "roles": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role"
-                    }
-                },
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User"
-                    }
+                "user_id": {
+                    "type": "string"
                 }
             }
         },
@@ -721,10 +726,10 @@ const docTemplate = `{
                     "description": "Nome do recurso, único e não nulo",
                     "type": "string"
                 },
-                "permissions": {
+                "policies": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission"
+                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyRole"
                     }
                 }
             }
@@ -821,16 +826,16 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "policies": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyUser"
+                    }
+                },
                 "roles": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role"
-                    }
-                },
-                "special_permissions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission"
                     }
                 },
                 "tenant": {
@@ -879,7 +884,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0.1",
+	Version:          "0.0.2",
 	Host:             "localhost:5001",
 	BasePath:         "",
 	Schemes:          []string{},

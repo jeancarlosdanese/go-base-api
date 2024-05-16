@@ -2,20 +2,6 @@ definitions:
   gin.H:
     additionalProperties: {}
     type: object
-  github_com_jeancarlosdanese_go-base-api_internal_domain_enums.ActionType:
-    enum:
-    - list
-    - store
-    - show
-    - update
-    - delete
-    type: string
-    x-enum-varnames:
-    - List
-    - Store
-    - Show
-    - Update
-    - Delete
   github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType:
     enum:
     - FISICA
@@ -32,7 +18,7 @@ definitions:
     x-enum-varnames:
     - Ativo
     - Inativo
-  github_com_jeancarlosdanese_go-base-api_internal_domain_models.Entry:
+  github_com_jeancarlosdanese_go-base-api_internal_domain_models.Endpoint:
     properties:
       id:
         type: integer
@@ -48,29 +34,43 @@ definitions:
       message:
         type: string
     type: object
-  github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission:
+  github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyRole:
     properties:
-      action:
-        $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.ActionType'
-      entry:
+      actions:
+        type: string
+      endpoint:
+        $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Endpoint'
+      endpoint_id:
+        type: integer
+      role:
         allOf:
-        - $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Entry'
-        description: constraints
-      entry_id:
+        - $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role'
+        description: // constraints
+      role_id:
         type: integer
-      id:
-        type: integer
-      roles:
-        items:
-          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role'
-        type: array
-      users:
-        items:
-          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User'
-        type: array
     required:
-    - entry_id
-    - id
+    - actions
+    - endpoint_id
+    - role_id
+    type: object
+  github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyUser:
+    properties:
+      actions:
+        type: string
+      endpoint:
+        $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Endpoint'
+      endpoint_id:
+        type: integer
+      user:
+        allOf:
+        - $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User'
+        description: // constraints
+      user_id:
+        type: string
+    required:
+    - actions
+    - endpoint_id
+    - user_id
     type: object
   github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role:
     properties:
@@ -79,9 +79,9 @@ definitions:
       name:
         description: Nome do recurso, único e não nulo
         type: string
-      permissions:
+      policies:
         items:
-          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission'
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyRole'
         type: array
     required:
     - id
@@ -149,13 +149,13 @@ definitions:
         type: string
       name:
         type: string
+      policies:
+        items:
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyUser'
+        type: array
       roles:
         items:
           $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role'
-        type: array
-      special_permissions:
-        items:
-          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission'
         type: array
       tenant:
         allOf:
@@ -189,7 +189,7 @@ info:
     url: github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
   termsOfService: github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
   title: Swagger Go Base API
-  version: 1.0.1
+  version: 0.0.2
 paths:
   /api/v1/auth/login:
     post:

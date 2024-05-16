@@ -29,6 +29,7 @@ func SetupRouter(r *gin.Engine, sc *app.ServicesContainer) {
 
 	// Configuração de rotas não autenticadas
 	auth := v1.Group("/auth")
+	auth.Use(OriginMiddleware())
 	{
 		authHandler := handlers_v1.NewAuthHandler(sc.UserService, sc.TokenService, sc.TokenRedisService)
 		auth.POST("/login", authHandler.Login) // Registra diretamente a rota POST /login no grupo /auth
@@ -41,17 +42,21 @@ func SetupRouter(r *gin.Engine, sc *app.ServicesContainer) {
 		// Grupo para gestão de tenants
 		tenantsGroup := secured.Group("/tenants")
 		// tenantsGroup.Use(RoleMiddleware("administration")) // Apenas usuários com role "administration"
-		tenantsGroup.Use(PermissionMiddleware()) // Apenas usuários com role "administration"
+		tenantsGroup.Use(PolicyMiddleware(sc.CasbinService))
 		{
 			tenantsHandler := handlers_v1.NewTenantsHandler(sc.TenantService)
-			tenantsGroup.GET("/", tenantsHandler.GetAll)
-			tenantsGroup.POST("/", tenantsHandler.Create)
+			tenantsHandler.RegisterRoutes(tenantsGroup)
+			// tenantsGroup.GET("", tenantsHandler.GetAll)
+			// tenantsGroup.POST("", tenantsHandler.Create)
 		}
 
-		usersHandler := handlers_v1.NewUsersHandler(sc.UserService)
-		usersGroup := secured.Group("/users")
-		// Aqui você pode adicionar middlewares específicos para /users se necessário
-		usersHandler.RegisterRoutes(usersGroup)
+		{
+			usersHandler := handlers_v1.NewUsersHandler(sc.UserService)
+			usersGroup := secured.Group("/users")
+			usersGroup.Use(PolicyMiddleware(sc.CasbinService))
+			// Aqui você pode adicionar middlewares específicos para /users se necessário
+			usersHandler.RegisterRoutes(usersGroup)
+		}
 	}
 }
 
@@ -63,6 +68,15 @@ func extractToken(c *gin.Context) string {
 		return parts[1]
 	}
 	return ""
+}
+
+func OriginMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
+		c.Set("origin", origin) // Armazenar no contexto
+
+		c.Next() // continuar com a cadeia de middlewares/handlers
+	}
 }
 
 func AuthMiddleware(tokenService *services.TokenService, tokenRedisService *services.TokenRedisService) gin.HandlerFunc {
@@ -132,35 +146,22 @@ func RoleMiddleware(requiredRoles ...string) gin.HandlerFunc {
 	}
 }
 
-// PermissionMiddleware verifica permissões específicas para ações ou recursos.
-func PermissionMiddleware() gin.HandlerFunc {
+// PolicyMiddleware verifica permissões específicas para ações ou recursos usando Casbin.
+func PolicyMiddleware(casbinService *services.CasbinService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user, exists := c.Get("user")
+		userData, exists := c.Get("user")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não autenticado"})
 			c.Abort()
 			return
 		}
 
-		// Supõe que o User tem um campo Permissions que é um slice de strings.
-		userInfo := user.(*models.UserDataRedis)
-
-		// Define o objeto e ação com base na URL e no método HTTP
+		user := userData.(*models.UserDataRedis) // Certifique-se de que este cast está correto conforme sua implementação
 		obj := c.Request.URL.Path
 		act := c.Request.Method
-		fmt.Println("PERMISSION: ", obj, act)
-		requiredPermission := "tenants:list"
 
-		hasPermission := false
-		for _, permission := range userInfo.Permissions {
-			fmt.Println(permission)
-			if permission == requiredPermission {
-				hasPermission = true
-				break
-			}
-		}
-
-		if !hasPermission {
+		// Tenta verificar permissões usando ID do usuário e roles
+		if !checkPermissions(user, casbinService, obj, act) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Acesso negado - permissão insuficiente"})
 			c.Abort()
 			return
@@ -168,4 +169,22 @@ func PermissionMiddleware() gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+// checkPermissions tenta verificar as permissões com o ID do usuário e suas roles
+func checkPermissions(user *models.UserDataRedis, casbinService *services.CasbinService, obj, act string) bool {
+	// Verifica permissões especiais usando o ID do usuário
+	if casbinService.CheckPermission(user.User.ID, obj, act) {
+		return true
+	}
+
+	// Verifica permissões baseadas nas roles
+	for _, role := range user.Roles {
+		if casbinService.CheckPermission(role, obj, act) {
+			return true
+		}
+	}
+
+	// Nenhuma permissão encontrada
+	return false
 }

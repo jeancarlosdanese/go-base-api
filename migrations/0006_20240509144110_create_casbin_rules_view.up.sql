@@ -5,12 +5,12 @@
 CREATE OR REPLACE VIEW casbin_rules_view AS
 SELECT row_number() OVER (
         ORDER BY roles.name,
-            entries.name,
+            endpoints.name,
             permissions.action
     ) AS id,
     'p' ptype,
     roles.name v0,
-    entries.name v1,
+    endpoints.name v1,
     permissions.action v2,
     null v3,
     null v4,
@@ -18,6 +18,6 @@ SELECT row_number() OVER (
 FROM permissions_roles
     INNER JOIN roles ON permissions_roles.role_id = roles.id
     INNER JOIN permissions ON permissions_roles.permission_id = permissions.id
-    INNER JOIN entries ON permissions.entry_id = entries.id;
+    INNER JOIN endpoints ON permissions.endpoint_id = endpoints.id;
 SELECT *
 FROM casbin_rules_view;

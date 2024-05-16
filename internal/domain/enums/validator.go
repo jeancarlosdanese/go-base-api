@@ -14,7 +14,8 @@ type Validatable interface {
 
 func Initialize() {
 	Validator = validator.New() // Inicializa o validador uma única vez para todo o pacote
-	Validator.RegisterValidation("actionType", validateActionType)
+	Validator.RegisterValidation("roleType", validateRoleType)
+	Validator.RegisterValidation("actionName", validateActionType)
 	Validator.RegisterValidation("personType", validatePersonType)
 	Validator.RegisterValidation("statusType", validateStatusType)
 }

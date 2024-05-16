@@ -1,5 +1,4 @@
 -- Sequence and defined type
--- Sequence and defined type
 CREATE SEQUENCE IF NOT EXISTS roles_id_seq;
 -- Table Definition
 CREATE TABLE "public"."roles" (

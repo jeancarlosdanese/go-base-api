@@ -12,7 +12,7 @@
             "name": "MIT",
             "url": "github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE"
         },
-        "version": "1.0.1"
+        "version": "0.0.2"
     },
     "host": "localhost:5001",
     "paths": {
@@ -599,23 +599,6 @@
             "type": "object",
             "additionalProperties": {}
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_enums.ActionType": {
-            "type": "string",
-            "enum": [
-                "list",
-                "store",
-                "show",
-                "update",
-                "delete"
-            ],
-            "x-enum-varnames": [
-                "List",
-                "Store",
-                "Show",
-                "Update",
-                "Delete"
-            ]
-        },
         "github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType": {
             "type": "string",
             "enum": [
@@ -638,7 +621,7 @@
                 "Inativo"
             ]
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.Entry": {
+        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.Endpoint": {
             "type": "object",
             "required": [
                 "id",
@@ -662,41 +645,63 @@
                 }
             }
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission": {
+        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyRole": {
             "type": "object",
             "required": [
-                "entry_id",
-                "id"
+                "actions",
+                "endpoint_id",
+                "role_id"
             ],
             "properties": {
-                "action": {
-                    "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.ActionType"
+                "actions": {
+                    "type": "string"
                 },
-                "entry": {
-                    "description": "constraints",
+                "endpoint": {
+                    "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Endpoint"
+                },
+                "endpoint_id": {
+                    "type": "integer"
+                },
+                "role": {
+                    "description": "// constraints",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Entry"
+                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role"
                         }
                     ]
                 },
-                "entry_id": {
+                "role_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyUser": {
+            "type": "object",
+            "required": [
+                "actions",
+                "endpoint_id",
+                "user_id"
+            ],
+            "properties": {
+                "actions": {
+                    "type": "string"
+                },
+                "endpoint": {
+                    "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Endpoint"
+                },
+                "endpoint_id": {
                     "type": "integer"
                 },
-                "id": {
-                    "type": "integer"
+                "user": {
+                    "description": "// constraints",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User"
+                        }
+                    ]
                 },
-                "roles": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role"
-                    }
-                },
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User"
-                    }
+                "user_id": {
+                    "type": "string"
                 }
             }
         },
@@ -714,10 +719,10 @@
                     "description": "Nome do recurso, único e não nulo",
                     "type": "string"
                 },
-                "permissions": {
+                "policies": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission"
+                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyRole"
                     }
                 }
             }
@@ -814,16 +819,16 @@
                 "name": {
                     "type": "string"
                 },
+                "policies": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyUser"
+                    }
+                },
                 "roles": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role"
-                    }
-                },
-                "special_permissions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Permission"
                     }
                 },
                 "tenant": {

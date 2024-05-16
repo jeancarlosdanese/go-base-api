@@ -4,6 +4,7 @@ package repositories
 
 import (
 	"context"
+	"errors"
 
 	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
 	"gorm.io/gorm"
@@ -22,20 +23,24 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 }
 
 func (r *GormRepository[Entity]) FindByEmail(ctx context.Context, email string) (*models.User, error) {
-	var entity models.User
-	err := r.DB.WithContext(ctx).
-		Preload("Roles").
-		Preload("Roles.Permissions").
-		Preload("Roles.Permissions.Entry").
-		Preload("SpecialPermissions").
-		Preload("SpecialPermissions.Entry").
+	var user models.User
+	err := r.DB.WithContext(ctx).Debug().
+		Preload("Roles.Policies.Endpoint").
 		Where("email = ?", email).
-		First(&entity).Error
+		First(&user).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil // Usuário não encontrado
 		}
 		return nil, err // Outro erro
 	}
-	return &entity, nil
+
+	if err := r.DB.WithContext(ctx).
+		Preload("Endpoint").
+		Where("user_id = ?", user.ID).
+		Find(&user.SpecialPolicies).Error; err != nil {
+		return nil, err // Erro ao carregar special policies
+	}
+
+	return &user, nil
 }

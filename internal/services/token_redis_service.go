@@ -44,26 +44,26 @@ func (s *TokenRedisService) GetUserFromToken(token string) (*models.UserDataRedi
 // prepareUserDataRedis prepares user data to be stored in Redis.
 func prepareUserDataRedis(user *models.User, token, refreshToken string) models.UserDataRedis {
 	// Map para evitar duplicatas e coletar todas as permissões
-	permissionsMap := make(map[string]bool)
+	policiesMap := make(map[string]bool)
 
 	// Extrair permissões das roles
 	for _, role := range user.Roles {
-		for _, permission := range role.Permissions {
-			permKey := permissionToString(permission)
-			permissionsMap[permKey] = true
+		for _, policy := range role.Policies {
+			permKey := policyRoleToString(policy)
+			policiesMap[permKey] = true
 		}
 	}
 
 	// Adicionar permissões especiais
-	for _, specialPermission := range user.SpecialPermissions {
-		permKey := permissionToString(specialPermission)
-		permissionsMap[permKey] = true
+	for _, specialPermission := range user.SpecialPolicies {
+		permKey := policyUserToString(specialPermission)
+		policiesMap[permKey] = true
 	}
 
 	// Converter mapa para slice
-	permissionsSlice := make([]string, 0, len(permissionsMap))
-	for permission := range permissionsMap {
-		permissionsSlice = append(permissionsSlice, permission)
+	policiesSlice := make([]string, 0, len(policiesMap))
+	for policy := range policiesMap {
+		policiesSlice = append(policiesSlice, policy)
 	}
 
 	return models.UserDataRedis{
@@ -76,11 +76,16 @@ func prepareUserDataRedis(user *models.User, token, refreshToken string) models.
 			Username: user.Username,
 			Email:    user.Email,
 		},
-		Roles:       user.ExtractRoles(),
-		Permissions: permissionsSlice,
+		Roles:    user.ExtractRoles(),
+		Policies: policiesSlice,
 	}
 }
 
-func permissionToString(permission *models.Permission) string {
-	return fmt.Sprintf("%s:%s", permission.Entry.Name, permission.Action)
+func policyRoleToString(policy *models.PolicyRole) string {
+	fmt.Printf("%s:%s:%s", fmt.Sprintf("%d", policy.RoleID), policy.Endpoint.Name, policy.Actions)
+	return fmt.Sprintf("%s:%s", policy.Endpoint.Name, policy.Actions)
+}
+
+func policyUserToString(policy *models.PolicyUser) string {
+	return fmt.Sprintf("%s:%s", policy.Endpoint.Name, policy.Actions)
 }

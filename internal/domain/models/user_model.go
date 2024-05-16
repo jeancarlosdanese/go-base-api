@@ -11,14 +11,14 @@ import (
 // User representa um usuário no sistema.
 type User struct {
 	BaseModel
-	TenantID           uuid.UUID     `gorm:"type:uuid;not null;uniqueIndex:uni_users_tenant_id_email" json:"tenant_id"`
-	Username           string        `gorm:"type:varchar(80);not null" json:"username"`
-	Name               string        `gorm:"type:varchar(254);not null" json:"name"`
-	Email              string        `gorm:"type:varchar(100);not null;uniqueIndex:uni_users_tenant_id_email" json:"email"`
-	Password           string        `gorm:"type:varchar(60);not null" json:"-"` // Omitindo senha no JSON
-	Thumbnail          string        `gorm:"type:varchar(70);" validate:"omitempty" json:"thumbnail"`
-	Roles              []*Role       `gorm:"many2many:users_roles;" json:"roles,omitempty"`
-	SpecialPermissions []*Permission `gorm:"many2many:permissions_users;" json:"special_permissions,omitempty"`
+	TenantID        uuid.UUID     `gorm:"type:uuid;not null;uniqueIndex:uni_users_tenant_id_email" json:"tenant_id"`
+	Username        string        `gorm:"type:varchar(80);not null" json:"username"`
+	Name            string        `gorm:"type:varchar(254);not null" json:"name"`
+	Email           string        `gorm:"type:varchar(100);not null;uniqueIndex:uni_users_tenant_id_email" json:"email"`
+	Password        string        `gorm:"type:varchar(60);not null" json:"-"` // Omitindo senha no JSON
+	Thumbnail       string        `gorm:"type:varchar(70);" validate:"omitempty" json:"thumbnail"`
+	Roles           []*Role       `gorm:"many2many:users_roles;" json:"roles,omitempty"`
+	SpecialPolicies []*PolicyUser `gorm:"many2many:policies_users;" json:"policies,omitempty"`
 
 	// constraints
 	Tenant *Tenant `gorm:"foreignKey:TenantID;constraint:OnUpdate:RESTRICT,OnDelete:RESTRICT;"`
@@ -33,13 +33,16 @@ func (u *User) ExtractRoles() []string {
 	return roles
 }
 
-// ExtractPermissions extrai e retorna as permissões especiais formatadas do usuário.
-func (u *User) ExtractPermissions() []string {
-	var permissions []string
-	for _, permission := range u.SpecialPermissions {
-		permissions = append(permissions, fmt.Sprintf("%s:%s", permission.Entry.Name, permission.Action))
+// ExtractPolicies extrai e retorna as permissões especiais formatadas do usuário.
+func (u *User) ExtractPolicies() []string {
+	var policies []string
+	for _, policy := range u.SpecialPolicies {
+		if policy.Endpoint != nil {
+			// Como Actions já é uma string, você pode usá-la diretamente
+			policies = append(policies, fmt.Sprintf("%s:%s", policy.Endpoint.Name, policy.Actions))
+		}
 	}
-	return permissions
+	return policies
 }
 
 type UserDataRedis struct {
@@ -47,7 +50,7 @@ type UserDataRedis struct {
 	RefreshToken *string   `json:"refreshToken"`
 	User         UserRedis `json:"user"`
 	Roles        []string  `json:"roles"`
-	Permissions  []string  `json:"permissions"`
+	Policies     []string  `json:"policies"`
 }
 
 type UserRedis struct {

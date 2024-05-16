@@ -13,7 +13,7 @@ import (
 )
 
 // @title 							Swagger Go Base API
-// @version 						1.0.1
+// @version 						0.0.2
 // @description 					This is a Go Base API.
 // @termsOfService 					github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
 // @contact.name 					Go Base API Support
@@ -41,7 +41,7 @@ func main() {
 	routes.SetupRouter(r, sc)
 
 	// Inicializa o servidor
-	if err := r.Run(":5001"); err != nil {
+	if err := r.Run("0.0.0.0:5001"); err != nil {
 		log.Fatalf("Failed to run server: %v", err)
 	}
 }

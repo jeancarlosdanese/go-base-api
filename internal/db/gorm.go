@@ -9,6 +9,7 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // NewDatabaseConnection cria e retorna uma nova conexão do banco de dados usando GORM.
@@ -22,13 +23,15 @@ func NewDatabaseConnection() (*gorm.DB, error) {
 		os.Getenv("DB_PORT"),
 	)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info), // Alterar para logger.Info para mais detalhes
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	// Migrate the schema
-	// db.AutoMigrate(&models.Entry{}, &models.Permission{}, &models.Role{}, &models.PermissionRole{}, &models.PermissionUser{}, &models.Tenant{}, &models.User{}, &models.UserRole{})
+	// db.AutoMigrate(&models.Endpoint{}, &models.Role{}, &models.PolicyRole{}, &models.Tenant{}, &models.User{}, &models.PolicyUser{}, &models.UserRole{})
 
 	log.Printf("INFO: DB (Gorm) inicializado com sucesso!")
 	return db, nil

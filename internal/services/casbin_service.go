@@ -29,12 +29,10 @@ func NewCasbinService(db *gorm.DB) (*CasbinService, error) {
 		r = sub, obj, act
 		[policy_definition]
 		p = sub, obj, act
-		[role_definition]
-		g = _, _
 		[policy_effect]
 		e = some(where (p.eft == allow))
 		[matchers]
-		m = g(r.sub, p.sub) && keyMatch2(r.obj, p.obj) && r.act == p.act
+		m = r.sub == p.sub && keyMatch2(r.obj, p.obj) && regexMatch(r.act, p.act)
 	`)
 	if err != nil {
 		log.Printf("Erro ao carregar o modelo Casbin: %v", err)
@@ -65,10 +63,12 @@ func NewCasbinService(db *gorm.DB) (*CasbinService, error) {
 }
 
 func (cs *CasbinService) CheckPermission(sub, obj, act string) bool {
+	log.Printf("Checking permission for sub: %s, obj: %s, act: %s", sub, obj, act)
 	ok, err := cs.enforcer.Enforce(sub, obj, act)
 	if err != nil {
 		log.Printf("Erro ao verificar permissão: %v", err)
 		return false
 	}
+	log.Printf("Permission result for %s, %s, %s: %t", sub, obj, act, ok)
 	return ok
 }

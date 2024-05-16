@@ -3,6 +3,7 @@
 package handlers_v1
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -46,6 +47,15 @@ func (h *AuthHandler) RegisterRoutes(router *gin.RouterGroup) {
 // @Failure 400 {object} map[string]string "Erro de autenticação"
 // @Router /api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
+	origin, exists := c.Get("origin")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não autenticado"})
+		c.Abort()
+		return
+	}
+
+	fmt.Println("ORIGIN: ", origin)
+
 	var loginForm models.LoginForm
 	if err := c.ShouldBind(&loginForm); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Parâmetros de entrada inválidos"})
@@ -58,11 +68,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// Extrai roles e permissions especiais usando métodos de receptor
+	// Extrai roles e policies especiais usando métodos de receptor
 	roles := user.ExtractRoles()
-	permissions := user.ExtractPermissions()
+	policies := user.ExtractPolicies()
 
-	accessToken, refreshToken, err := h.tokenService.CreateTokens(user.ID, roles, permissions)
+	accessToken, refreshToken, err := h.tokenService.CreateTokens(user.ID, roles, policies)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Falha ao gerar tokens"})
 		return
@@ -91,7 +101,7 @@ func prepareTokenResponse(user *models.User, token, refreshToken string) models.
 			Email:     user.Email,
 			Thumbnail: &user.Thumbnail,
 		},
-		Roles:       user.ExtractRoles(),
-		Permissions: user.ExtractPermissions(),
+		Roles:    user.ExtractRoles(),
+		Policies: user.ExtractPolicies(),
 	}
 }
