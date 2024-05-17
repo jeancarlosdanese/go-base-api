@@ -3,7 +3,6 @@
 package handlers_v1
 
 import (
-	"context"
 	"log"
 	"net/http"
 
@@ -43,8 +42,8 @@ func (h *TenantsHandler) RegisterRoutes(router *gin.RouterGroup) {
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
 // @Router /api/v1/tenants [get]
 func (h *TenantsHandler) GetAll(c *gin.Context) {
-	ctx := context.Background()
-	tenants, err := h.service.GetAll(ctx)
+	// ctx := context.Background()
+	tenants, err := h.service.GetAll(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -69,8 +68,8 @@ func (h *TenantsHandler) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx := context.Background()
-	if err := h.service.Create(ctx, &tenant); err != nil {
+	// ctx := context.Background()
+	if err := h.service.Create(c, &tenant); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -95,8 +94,8 @@ func (h *TenantsHandler) GetById(c *gin.Context) {
 		return
 	}
 
-	ctx := context.Background()
-	tenant, err := h.service.GetByID(ctx, id)
+	// ctx := context.Background()
+	tenant, err := h.service.GetByID(c, id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Tenant not found"})
 		return
@@ -132,8 +131,8 @@ func (h *TenantsHandler) Update(c *gin.Context) {
 	// Opcional: Definir o ID do tenant com o valor extraído da URL, garantindo que o recurso correto seja atualizado.
 	tenant.ID = id
 
-	ctx := context.Background()
-	if err := h.service.Update(ctx, &tenant); err != nil {
+	// ctx := context.Background()
+	if err := h.service.Update(c, &tenant); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -168,8 +167,8 @@ func (h *TenantsHandler) UpdatePatch(c *gin.Context) {
 	// Remover campos que não devem ser atualizáveis
 	delete(updateData, "cpf_cnpj")
 
-	ctx := context.Background()
-	if err := h.service.UpdatePartial(ctx, id, updateData); err != nil {
+	// ctx := context.Background()
+	if err := h.service.UpdatePartial(c, id, updateData); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -194,8 +193,8 @@ func (h *TenantsHandler) Delete(c *gin.Context) {
 		log.Fatalf("Invalid UUID: %v", err)
 	}
 
-	ctx := context.Background()
-	if err := h.service.Delete(ctx, id); err != nil {
+	// ctx := context.Background()
+	if err := h.service.Delete(c, id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

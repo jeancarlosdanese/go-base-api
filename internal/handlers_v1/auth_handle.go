@@ -81,7 +81,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	if err := h.tokenRedisService.SaveUserTokenInfo(user, accessToken, refreshToken); err != nil {
+	if err := h.tokenRedisService.SaveTokenDataRedis(user, accessToken, refreshToken); err != nil {
 		logging.ErrorLogger.Printf("Falha ao salvar informações do usuário no Redis: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Falha ao salvar informações do usuário no Redis"})
 		return

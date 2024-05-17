@@ -3,10 +3,11 @@
 package handlers_v1
 
 import (
-	"context"
+	"fmt"
 	"log"
 	"net/http"
 
+	contextkeys "github.com/jeancarlosdanese/go-base-api/internal/domain/context_keys"
 	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
 	"github.com/jeancarlosdanese/go-base-api/internal/services"
 
@@ -43,8 +44,7 @@ func (h *UsersHandler) RegisterRoutes(router *gin.RouterGroup) {
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
 // @Router /api/v1/users [get]
 func (h *UsersHandler) getAll(c *gin.Context) {
-	ctx := context.Background()
-	users, err := h.service.GetAll(ctx)
+	users, err := h.service.GetAll(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -64,13 +64,35 @@ func (h *UsersHandler) getAll(c *gin.Context) {
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
 // @Router /api/v1/users [post]
 func (h *UsersHandler) create(c *gin.Context) {
+	tenantID, exists := c.Get(string(contextkeys.TenantIDKey))
+	if !exists {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Tenant não encontrado"})
+	}
+
+	// Verificar o tipo do tenantID
+	fmt.Printf("Tipo de tenantID: %T\n", tenantID)
+
+	var tenantUUID uuid.UUID
+	switch v := tenantID.(type) {
+	case string:
+		uuidParsed, err := uuid.Parse(v)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao converter tenantID para uuid.UUID"})
+		}
+		tenantUUID = uuidParsed
+	case uuid.UUID:
+		tenantUUID = v
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "TenantID não é do tipo esperado (string ou uuid.UUID"})
+	}
+
 	var user models.User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx := context.Background()
-	if err := h.service.Create(ctx, &user); err != nil {
+	user.TenantID = tenantUUID
+	if err := h.service.Create(c, &user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -95,8 +117,7 @@ func (h *UsersHandler) getById(c *gin.Context) {
 		return
 	}
 
-	ctx := context.Background()
-	user, err := h.service.GetByID(ctx, id)
+	user, err := h.service.GetByID(c, id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
@@ -132,8 +153,7 @@ func (h *UsersHandler) update(c *gin.Context) {
 	// Opcional: Definir o ID do user com o valor extraído da URL, garantindo que o recurso correto seja atualizado.
 	user.ID = id
 
-	ctx := context.Background()
-	if err := h.service.Update(ctx, &user); err != nil {
+	if err := h.service.Update(c, &user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -168,8 +188,7 @@ func (h *UsersHandler) updatePatch(c *gin.Context) {
 	// Remover campos que não devem ser atualizáveis
 	delete(updateData, "cpf_cnpj")
 
-	ctx := context.Background()
-	if err := h.service.UpdatePartial(ctx, id, updateData); err != nil {
+	if err := h.service.UpdatePartial(c, id, updateData); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -194,8 +213,7 @@ func (h *UsersHandler) delete(c *gin.Context) {
 		log.Fatalf("Invalid UUID: %v", err)
 	}
 
-	ctx := context.Background()
-	if err := h.service.Delete(ctx, id); err != nil {
+	if err := h.service.Delete(c, id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

@@ -45,18 +45,18 @@ func (u *User) ExtractPolicies() []string {
 	return policies
 }
 
-type UserDataRedis struct {
+type TokenDataRedis struct {
 	Token        string    `json:"token"`
 	RefreshToken *string   `json:"refreshToken"`
 	User         UserRedis `json:"user"`
-	Roles        []string  `json:"roles"`
-	Policies     []string  `json:"policies"`
 }
 
 type UserRedis struct {
-	ID       string `json:"id"`
-	TenantID string `json:"tenant_id"`
-	Name     string `json:"name"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
+	ID       string   `json:"id"`
+	TenantID string   `json:"tenant_id"`
+	Name     string   `json:"name"`
+	Username string   `json:"username"`
+	Email    string   `json:"email"`
+	Roles    []string `json:"roles"`
+	Policies []string `json:"policies"`
 }

@@ -20,11 +20,11 @@ type UserRepository interface {
 
 // NewUserRepository cria uma nova instância de um repositório que implementa UserRepository.
 func NewUserRepository(db *gorm.DB) UserRepository {
-	repo := NewGormRepository[models.User](db).(UserRepository) // Asserção de tipo
+	repo := NewGormAuthRepository[models.User](db).(UserRepository) // Asserção de tipo
 	return repo
 }
 
-func (r *GormRepository[Entity]) FindByEmail(ctx context.Context, email, origin string) (*models.User, error) {
+func (r *GormAuthRepository[Entity]) FindByEmail(ctx context.Context, email, origin string) (*models.User, error) {
 	var user models.User
 	formattedOrigin := fmt.Sprintf(`["%s"]`, origin)
 	err := r.DB.WithContext(ctx).

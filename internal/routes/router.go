@@ -3,8 +3,10 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	_ "github.com/jeancarlosdanese/go-base-api/docs"
 
@@ -13,6 +15,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/jeancarlosdanese/go-base-api/internal/app"
+	contextkeys "github.com/jeancarlosdanese/go-base-api/internal/domain/context_keys"
 	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
 	handlers_v1 "github.com/jeancarlosdanese/go-base-api/internal/handlers_v1"
 	"github.com/jeancarlosdanese/go-base-api/internal/services"
@@ -79,6 +82,8 @@ func OriginMiddleware() gin.HandlerFunc {
 
 func AuthMiddleware(tokenService *services.TokenService, tokenRedisService *services.TokenRedisService) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Capturar o tempo de início
+		start := time.Now()
 		tokenString := extractToken(c) // Função auxiliar para extrair o token
 		if tokenString == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token não fornecido"})
@@ -94,23 +99,31 @@ func AuthMiddleware(tokenService *services.TokenService, tokenRedisService *serv
 		}
 
 		// Tenta recuperar as informações do usuário do Redis
-		user, err := tokenRedisService.GetUserFromToken(tokenString)
-		if err != nil || user == nil {
+		tokenDataRedis, err := tokenRedisService.GetTokenDataRedisFromToken(tokenString)
+		if err != nil || tokenDataRedis == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Falha ao recuperar informações do usuário"})
 			c.Abort()
 			return
 		}
 
 		// Configura o contexto com o usuário para uso posterior
-		c.Set("user", user)
+		c.Set(string(contextkeys.TokenDataKey), tokenDataRedis)
+		c.Set(string(contextkeys.TenantIDKey), tokenDataRedis.User.TenantID)
 		c.Next() // Prosseguir com a próxima função no pipeline
+		// Capturar o tempo de término
+		end := time.Now()
+
+		// Calcular a diferença
+		duration := end.Sub(start)
+
+		fmt.Printf("O processo demorou %v\n", duration)
 	}
 }
 
 // RoleMiddleware verifica se o usuário possui as roles necessárias.
 func RoleMiddleware(requiredRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user, exists := c.Get("user")
+		tokenData, exists := c.Get(string(contextkeys.TokenDataKey))
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não autenticado"})
 			c.Abort()
@@ -118,9 +131,9 @@ func RoleMiddleware(requiredRoles ...string) gin.HandlerFunc {
 		}
 
 		// Asumindo que a estrutura User tem um campo Roles que é um slice de strings.
-		userInfo := user.(*models.UserDataRedis)
+		tokenDataRedis := tokenData.(*models.TokenDataRedis)
 		isValidRole := false
-		for _, role := range userInfo.Roles {
+		for _, role := range tokenDataRedis.User.Roles {
 
 			for _, requiredRole := range requiredRoles {
 				if role == requiredRole {
@@ -146,19 +159,19 @@ func RoleMiddleware(requiredRoles ...string) gin.HandlerFunc {
 // PolicyMiddleware verifica permissões específicas para ações ou recursos usando Casbin.
 func PolicyMiddleware(casbinService *services.CasbinService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userData, exists := c.Get("user")
+		tokenData, exists := c.Get(string(contextkeys.TokenDataKey))
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não autenticado"})
 			c.Abort()
 			return
 		}
 
-		user := userData.(*models.UserDataRedis) // Certifique-se de que este cast está correto conforme sua implementação
+		tokenDataRedis := tokenData.(*models.TokenDataRedis) // Certifique-se de que este cast está correto conforme sua implementação
 		obj := c.Request.URL.Path
 		act := c.Request.Method
 
 		// Tenta verificar permissões usando ID do usuário e roles
-		if !checkPermissions(user, casbinService, obj, act) {
+		if !checkPermissions(tokenDataRedis, casbinService, obj, act) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Acesso negado - permissão insuficiente"})
 			c.Abort()
 			return
@@ -169,14 +182,14 @@ func PolicyMiddleware(casbinService *services.CasbinService) gin.HandlerFunc {
 }
 
 // checkPermissions tenta verificar as permissões com o ID do usuário e suas roles
-func checkPermissions(user *models.UserDataRedis, casbinService *services.CasbinService, obj, act string) bool {
+func checkPermissions(tokenDataRedis *models.TokenDataRedis, casbinService *services.CasbinService, obj, act string) bool {
 	// Verifica permissões especiais usando o ID do usuário
-	if casbinService.CheckPermission(user.User.ID, obj, act) {
+	if casbinService.CheckPermission(tokenDataRedis.User.ID, obj, act) {
 		return true
 	}
 
 	// Verifica permissões baseadas nas roles
-	for _, role := range user.Roles {
+	for _, role := range tokenDataRedis.User.Roles {
 		if casbinService.CheckPermission(role, obj, act) {
 			return true
 		}

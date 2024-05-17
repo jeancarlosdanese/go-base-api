@@ -20,29 +20,29 @@ func NewTokenRedisService(redisService *RedisService) *TokenRedisService {
 	}
 }
 
-func (s *TokenRedisService) SaveUserTokenInfo(user *models.User, token, refreshToken string) error {
-	userDataRedis := prepareUserDataRedis(user, token, refreshToken)
-	userData, err := json.Marshal(userDataRedis)
+func (s *TokenRedisService) SaveTokenDataRedis(user *models.User, token, refreshToken string) error {
+	tokenDataRedis := prepareTokenDataRedis(user, token, refreshToken)
+	tokenData, err := json.Marshal(tokenDataRedis)
 	if err != nil {
 		return err
 	}
-	return s.Set("token:"+token, userData, time.Hour*1)
+	return s.Set("token:"+token, tokenData, time.Hour*1)
 }
 
-func (s *TokenRedisService) GetUserFromToken(token string) (*models.UserDataRedis, error) {
+func (s *TokenRedisService) GetTokenDataRedisFromToken(token string) (*models.TokenDataRedis, error) {
 	result, err := s.Get("token:" + token)
 	if err != nil {
 		return nil, err
 	}
-	var userDataRedis models.UserDataRedis
-	if err := json.Unmarshal([]byte(result), &userDataRedis); err != nil {
+	var tokenDataRedis models.TokenDataRedis
+	if err := json.Unmarshal([]byte(result), &tokenDataRedis); err != nil {
 		return nil, err
 	}
-	return &userDataRedis, nil
+	return &tokenDataRedis, nil
 }
 
-// prepareUserDataRedis prepares user data to be stored in Redis.
-func prepareUserDataRedis(user *models.User, token, refreshToken string) models.UserDataRedis {
+// prepareTokenDataRedis prepares user data to be stored in Redis.
+func prepareTokenDataRedis(user *models.User, token, refreshToken string) models.TokenDataRedis {
 	// Map para evitar duplicatas e coletar todas as permissões
 	policiesMap := make(map[string]bool)
 
@@ -66,7 +66,7 @@ func prepareUserDataRedis(user *models.User, token, refreshToken string) models.
 		policiesSlice = append(policiesSlice, policy)
 	}
 
-	return models.UserDataRedis{
+	return models.TokenDataRedis{
 		Token:        token,
 		RefreshToken: &refreshToken,
 		User: models.UserRedis{
@@ -75,9 +75,9 @@ func prepareUserDataRedis(user *models.User, token, refreshToken string) models.
 			Name:     user.Name,
 			Username: user.Username,
 			Email:    user.Email,
+			Roles:    user.ExtractRoles(),
+			Policies: policiesSlice,
 		},
-		Roles:    user.ExtractRoles(),
-		Policies: policiesSlice,
 	}
 }
 
