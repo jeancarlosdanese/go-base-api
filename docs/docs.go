@@ -739,10 +739,15 @@ const docTemplate = `{
             "required": [
                 "name",
                 "status",
-                "subdomain",
                 "type"
             ],
             "properties": {
+                "allowed_origins": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "cell_phone": {
                     "type": "string"
                 },
@@ -763,9 +768,6 @@ const docTemplate = `{
                 },
                 "deleted_at": {
                     "$ref": "#/definitions/gorm.DeletedAt"
-                },
-                "domain": {
-                    "type": "string"
                 },
                 "email": {
                     "type": "string"
@@ -795,9 +797,6 @@ const docTemplate = `{
                     "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.StatusType"
                 },
                 "street": {
-                    "type": "string"
-                },
-                "subdomain": {
                     "type": "string"
                 },
                 "type": {

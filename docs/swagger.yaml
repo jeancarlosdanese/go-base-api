@@ -89,6 +89,10 @@ definitions:
     type: object
   github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant:
     properties:
+      allowed_origins:
+        items:
+          type: integer
+        type: array
       cell_phone:
         type: string
       cep:
@@ -103,8 +107,6 @@ definitions:
         type: string
       deleted_at:
         $ref: '#/definitions/gorm.DeletedAt'
-      domain:
-        type: string
       email:
         type: string
       id:
@@ -125,8 +127,6 @@ definitions:
         $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.StatusType'
       street:
         type: string
-      subdomain:
-        type: string
       type:
         $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType'
       updated_at:
@@ -134,7 +134,6 @@ definitions:
     required:
     - name
     - status
-    - subdomain
     - type
     type: object
   github_com_jeancarlosdanese_go-base-api_internal_domain_models.User:
