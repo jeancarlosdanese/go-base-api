@@ -30,10 +30,11 @@ func SetupRouter(r *gin.Engine, sc *app.ServicesContainer) {
 	v1 := r.Group("/api/v1")
 
 	// Configuração de rotas não autenticadas
-	auth := v1.Group("/auth")
+	authGroup := v1.Group("/auth")
 	{
 		authHandler := handlers_v1.NewAuthHandler(sc.UserService, sc.TokenService, sc.TokenRedisService)
-		auth.POST("/login", authHandler.Login) // Registra diretamente a rota POST /login no grupo /auth
+		// auth.POST("/login", authHandler.Login) // Registra diretamente a rota POST /login no grupo /auth
+		authHandler.RegisterRoutes(authGroup)
 	}
 
 	// Middleware de autenticação que é aplicado a todas as rotas que necessitam autenticação

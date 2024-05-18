@@ -3,9 +3,9 @@
 package services
 
 import (
-	"context"
 	"errors"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
 	"github.com/jeancarlosdanese/go-base-api/internal/logging"
 	"github.com/jeancarlosdanese/go-base-api/internal/repositories"
@@ -21,13 +21,9 @@ func NewUserService(repo repositories.UserRepository) *UserService {
 	return &UserService{BaseService: baseService}
 }
 
-// func (s *UserService) FindByEmail(ctx context.Context, email string) (*models.User, error) {
-// 	return s.Repo.FindByEmail(ctx, email)
-// }
-
 // Authenticate verifica as credenciais de um usuário.
-func (s *UserService) Authenticate(ctx context.Context, email, password, origin string) (*models.User, error) {
-	user, err := s.Repo.FindByEmail(ctx, email, origin)
+func (s *UserService) Authenticate(c *gin.Context, email, password, origin string) (*models.User, error) {
+	user, err := s.Repo.FindByEmail(c, email, origin)
 	if err != nil {
 		logging.InfoLogger.Printf("Erro ao buscar usuário por email e origem: %v", err)
 		return nil, err

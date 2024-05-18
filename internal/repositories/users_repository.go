@@ -3,10 +3,11 @@
 package repositories
 
 import (
-	"context"
 	"errors"
 	"fmt"
 
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
 	"github.com/jeancarlosdanese/go-base-api/internal/logging"
 	"gorm.io/gorm"
@@ -15,7 +16,8 @@ import (
 // UserRepository é uma interface que estende a interface Repository para operações específicas do User.
 type UserRepository interface {
 	Repository[models.User]
-	FindByEmail(ctx context.Context, email, origin string) (*models.User, error)
+	FindByEmail(c *gin.Context, email, origin string) (*models.User, error)
+	GetOnlyByID(c *gin.Context, id uuid.UUID) (*models.User, error)
 }
 
 // NewUserRepository cria uma nova instância de um repositório que implementa UserRepository.
@@ -24,10 +26,10 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 	return repo
 }
 
-func (r *GormAuthRepository[Entity]) FindByEmail(ctx context.Context, email, origin string) (*models.User, error) {
+func (r *GormAuthRepository[Entity]) FindByEmail(c *gin.Context, email, origin string) (*models.User, error) {
 	var user models.User
 	formattedOrigin := fmt.Sprintf(`["%s"]`, origin)
-	err := r.DB.WithContext(ctx).
+	err := r.DB.WithContext(c).
 		Preload("Roles.Policies.Endpoint").
 		Where("email = ? AND EXISTS (SELECT 1 FROM tenants WHERE tenants.id = users.tenant_id AND allowed_origins @> ?)", email, formattedOrigin).
 		Take(&user).Error
@@ -40,7 +42,7 @@ func (r *GormAuthRepository[Entity]) FindByEmail(ctx context.Context, email, ori
 		return nil, err
 	}
 
-	if err := r.DB.WithContext(ctx).
+	if err := r.DB.WithContext(c).
 		Preload("Endpoint").
 		Where("user_id = ?", user.ID).
 		Find(&user.SpecialPolicies).Error; err != nil {
@@ -49,4 +51,15 @@ func (r *GormAuthRepository[Entity]) FindByEmail(ctx context.Context, email, ori
 	}
 
 	return &user, nil
+}
+
+func (r *GormAuthRepository[Entity]) GetOnlyByID(c *gin.Context, id uuid.UUID) (*Entity, error) {
+	fmt.Printf("UserID: %v", id)
+
+	var entity Entity
+	err := r.DB.WithContext(c).First(&entity, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &entity, nil
 }

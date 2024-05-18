@@ -20,13 +20,28 @@ func NewTokenRedisService(redisService *RedisService) *TokenRedisService {
 	}
 }
 
-func (s *TokenRedisService) SaveTokenDataRedis(user *models.User, token, refreshToken string) error {
+func (s *TokenRedisService) SaveTokenDataRedis(user *models.User, token, refreshToken string, accessDuration time.Duration) error {
 	tokenDataRedis := prepareTokenDataRedis(user, token, refreshToken)
 	tokenData, err := json.Marshal(tokenDataRedis)
 	if err != nil {
 		return err
 	}
-	return s.Set("token:"+token, tokenData, time.Hour*1)
+	if err := s.Set("token:"+token, tokenData, accessDuration); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *TokenRedisService) ValidateRefreshToken(refreshToken string) (*models.TokenDataRedis, error) {
+	result, err := s.Get("refresh_token:" + refreshToken)
+	if err != nil {
+		return nil, err
+	}
+	var tokenDataRedis models.TokenDataRedis
+	if err := json.Unmarshal([]byte(result), &tokenDataRedis); err != nil {
+		return nil, err
+	}
+	return &tokenDataRedis, nil
 }
 
 func (s *TokenRedisService) GetTokenDataRedisFromToken(token string) (*models.TokenDataRedis, error) {

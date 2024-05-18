@@ -33,6 +33,7 @@ func NewAuthHandler(
 // RegisterRoutes registra as rotas para autenticação.
 func (h *AuthHandler) RegisterRoutes(router *gin.RouterGroup) {
 	router.POST("/login", h.Login)
+	router.POST("/refresh", h.Refresh)
 }
 
 // login realiza o login do usuário e retorna um JWT.
@@ -59,7 +60,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.Authenticate(c.Request.Context(), loginForm.Email, loginForm.Password, origin)
+	user, err := h.userService.Authenticate(c, loginForm.Email, loginForm.Password, origin)
 	if err != nil {
 		logging.WarnLogger.Printf("Erro ao autenticar usuário: %v", err)
 		if err.Error() == "usuário ou origem não encontrado" || err.Error() == "senha inválida" {
@@ -71,6 +72,46 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	h.generateAndSaveTokens(c, user)
+}
+
+// Refresh renova o token usando o refreshToken.
+// @Summary Renova o token
+// @Description Renova o token usando o refreshToken
+// @Tags Auth
+// @Accept x-www-form-urlencoded
+// @Produce json
+// @Param refreshToken formData string true "Refresh Token"
+// @Success 200 {object} map[string]interface{} "Token renovado com sucesso"
+// @Failure 400 {object} map[string]string "Erro de autenticação"
+// @Router /api/v1/auth/refresh [post]
+// Refresh renova o token usando o refreshToken.
+func (h *AuthHandler) Refresh(c *gin.Context) {
+	var refreshTokenRequest models.RefreshTokenRequest
+	if err := c.ShouldBind(&refreshTokenRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Parâmetros de entrada inválidos"})
+		return
+	}
+
+	userID, err := h.tokenService.RefreshTokens(refreshTokenRequest.RefreshToken)
+	if err != nil {
+		logging.WarnLogger.Printf("Erro ao renovar token: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token inválido ou expirado"})
+		return
+	}
+
+	user, err := h.userService.Repo.GetOnlyByID(c, userID)
+	if err != nil {
+		logging.WarnLogger.Printf("Erro ao buscar usuário: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não encontrado"})
+		return
+	}
+
+	h.generateAndSaveTokens(c, user)
+}
+
+// generateAndSaveTokens gera e salva tokens para o usuário.
+func (h *AuthHandler) generateAndSaveTokens(c *gin.Context, user *models.User) {
 	roles := user.ExtractRoles()
 	policies := user.ExtractPolicies()
 
@@ -81,7 +122,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	if err := h.tokenRedisService.SaveTokenDataRedis(user, accessToken, refreshToken); err != nil {
+	if err := h.tokenRedisService.SaveTokenDataRedis(user, accessToken, refreshToken, h.tokenService.AccessDuration); err != nil {
 		logging.ErrorLogger.Printf("Falha ao salvar informações do usuário no Redis: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Falha ao salvar informações do usuário no Redis"})
 		return

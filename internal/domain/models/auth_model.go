@@ -24,3 +24,7 @@ type TokenUser struct {
 	Email     string  `json:"email"`
 	Thumbnail *string `json:"thumbnail"`
 }
+
+type RefreshTokenRequest struct {
+	RefreshToken string `form:"refreshToken" binding:"required"`
+}
