@@ -428,7 +428,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User"
+                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.UserCreate"
                         }
                     }
                 ],
@@ -887,13 +887,30 @@ const docTemplate = `{
                         }
                     ]
                 },
-                "tenant_id": {
-                    "type": "string"
-                },
                 "thumbnail": {
                     "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.UserCreate": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "tenant_id": {
                     "type": "string"
                 },
                 "username": {
@@ -925,7 +942,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "0.0.2",
+	Version:          "0.0.3",
 	Host:             "localhost:5001",
 	BasePath:         "",
 	Schemes:          []string{},

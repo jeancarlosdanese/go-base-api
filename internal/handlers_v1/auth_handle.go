@@ -143,7 +143,7 @@ func prepareTokenResponse(user *models.User, token, refreshToken string) models.
 			Name:      user.Name,
 			Username:  user.Username,
 			Email:     user.Email,
-			Thumbnail: &user.Thumbnail,
+			Thumbnail: user.Thumbnail,
 		},
 		Roles:    user.ExtractRoles(),
 		Policies: user.ExtractPolicies(),

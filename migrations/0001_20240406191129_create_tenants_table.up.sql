@@ -5,8 +5,8 @@ CREATE TYPE "public"."status_type" AS ENUM ('ATIVO', 'INATIVO');
 -- Table Definition
 CREATE TABLE "public"."tenants" (
     "id" uuid NOT NULL DEFAULT gen_random_uuid(),
-    "created_at" timestamptz,
-    "updated_at" timestamptz,
+    "created_at" timestamptz DEFAULT now(),
+    "updated_at" timestamptz DEFAULT now(),
     "deleted_at" timestamptz,
     "type" "public"."person_type" NOT NULL,
     "name" varchar(100) NOT NULL,
@@ -30,3 +30,14 @@ CREATE TABLE "public"."tenants" (
 CREATE UNIQUE INDEX uni_tenants_cpf_cnpj ON public.tenants USING btree (cpf_cnpj);
 CREATE UNIQUE INDEX uni_tenants_allowed_origins ON public.tenants USING btree (allowed_origins);
 CREATE INDEX idx_tenants_deleted_at ON public.tenants USING btree (deleted_at);
+-- Inserir dados do "master" Tenant na tabela "tenants"
+INSERT INTO "public"."tenants" (
+        "type",
+        "name",
+        "allowed_origins"
+    )
+VALUES (
+        'JURIDICA',
+        'Master Tenant',
+        '["localhost"]'
+    );

@@ -160,11 +160,22 @@ definitions:
         allOf:
         - $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant'
         description: constraints
-      tenant_id:
-        type: string
       thumbnail:
         type: string
       updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  github_com_jeancarlosdanese_go-base-api_internal_domain_models.UserCreate:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      tenant_id:
         type: string
       username:
         type: string
@@ -188,7 +199,7 @@ info:
     url: github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
   termsOfService: github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
   title: Swagger Go Base API
-  version: 0.0.2
+  version: 0.0.3
 paths:
   /api/v1/auth/login:
     post:
@@ -457,7 +468,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User'
+          $ref: '#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.UserCreate'
       produces:
       - application/json
       responses:

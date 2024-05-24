@@ -12,7 +12,7 @@
             "name": "MIT",
             "url": "github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE"
         },
-        "version": "0.0.2"
+        "version": "0.0.3"
     },
     "host": "localhost:5001",
     "paths": {
@@ -421,7 +421,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User"
+                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.UserCreate"
                         }
                     }
                 ],
@@ -880,13 +880,30 @@
                         }
                     ]
                 },
-                "tenant_id": {
-                    "type": "string"
-                },
                 "thumbnail": {
                     "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.UserCreate": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "tenant_id": {
                     "type": "string"
                 },
                 "username": {

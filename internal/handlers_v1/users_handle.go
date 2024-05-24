@@ -3,7 +3,6 @@
 package handlers_v1
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -58,7 +57,7 @@ func (h *UsersHandler) getAll(c *gin.Context) {
 // @Tags Users
 // @Accept json
 // @Produce json
-// @Param user body models.User true "Informações do User"
+// @Param user body models.UserCreate true "Informações do User"
 // @Success 201 {object} models.User "User Criado"
 // @Failure 400 {object} models.HTTPError "Erro de Formato de Solicitação"
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
@@ -68,9 +67,6 @@ func (h *UsersHandler) create(c *gin.Context) {
 	if !exists {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Tenant não encontrado"})
 	}
-
-	// Verificar o tipo do tenantID
-	fmt.Printf("Tipo de tenantID: %T\n", tenantID)
 
 	var tenantUUID uuid.UUID
 	switch v := tenantID.(type) {
@@ -86,16 +82,19 @@ func (h *UsersHandler) create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "TenantID não é do tipo esperado (string ou uuid.UUID"})
 	}
 
-	var user models.User
-	if err := c.ShouldBindJSON(&user); err != nil {
+	var userCreate models.UserCreate
+	if err := c.ShouldBindJSON(&userCreate); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	user.TenantID = tenantUUID
-	if err := h.service.Create(c, &user); err != nil {
+	userCreate.TenantID = tenantUUID
+
+	user, err := h.service.Create(c, userCreate)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(http.StatusCreated, user)
 }
 

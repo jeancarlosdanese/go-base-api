@@ -11,17 +11,26 @@ import (
 // User representa um usuário no sistema.
 type User struct {
 	BaseModel
-	TenantID        uuid.UUID     `gorm:"type:uuid;not null;uniqueIndex:uni_users_tenant_id_email" json:"tenant_id"`
+	TenantID        uuid.UUID     `gorm:"type:uuid;not null;uniqueIndex:uni_users_tenant_id_email" json:"-"`
 	Username        string        `gorm:"type:varchar(80);not null" json:"username"`
 	Name            string        `gorm:"type:varchar(254);not null" json:"name"`
 	Email           string        `gorm:"type:varchar(100);not null;uniqueIndex:uni_users_tenant_id_email" json:"email"`
-	Password        string        `gorm:"type:varchar(60);not null" json:"-"` // Omitindo senha no JSON
-	Thumbnail       string        `gorm:"type:varchar(70);" validate:"omitempty" json:"thumbnail"`
-	Roles           []*Role       `gorm:"many2many:users_roles;" json:"roles,omitempty"`
-	SpecialPolicies []*PolicyUser `gorm:"many2many:policies_users;" json:"policies,omitempty"`
+	Password        string        `gorm:"type:varchar(60);not null" json:"-"`
+	Thumbnail       *string       `gorm:"type:varchar(70)" json:"thumbnail"`
+	Roles           []*Role       `gorm:"many2many:users_roles;" json:"roles"`
+	SpecialPolicies []*PolicyUser `gorm:"many2many:policies_users;" json:"policies"`
 
 	// constraints
-	Tenant *Tenant `gorm:"foreignKey:TenantID;constraint:OnUpdate:RESTRICT,OnDelete:RESTRICT;"`
+	Tenant *Tenant `gorm:"foreignKey:TenantID;constraint:OnUpdate:RESTRICT,OnDelete:RESTRICT;" json:"tenant,omitempty"`
+}
+
+// UserCreate é usado para receber dados do formulário de criação de usuário.
+type UserCreate struct {
+	TenantID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:uni_users_tenant_id_email" json:"tenant_id"`
+	Username string    `gorm:"type:varchar(80);not null" json:"username"`
+	Name     string    `gorm:"type:varchar(254);not null" json:"name"`
+	Email    string    `gorm:"type:varchar(100);not null;uniqueIndex:uni_users_tenant_id_email" json:"email"`
+	Password string    `gorm:"type:varchar(60);not null" json:"password"`
 }
 
 // ExtractRoles extrai e retorna os nomes dos roles do usuário.

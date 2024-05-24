@@ -1,8 +1,8 @@
 -- Table Definition
 CREATE TABLE "public"."users" (
     "id" uuid NOT NULL DEFAULT gen_random_uuid(),
-    "created_at" timestamptz,
-    "updated_at" timestamptz,
+    "created_at" timestamptz DEFAULT now(),
+    "updated_at" timestamptz DEFAULT now(),
     "deleted_at" timestamptz,
     "tenant_id" uuid NOT NULL,
     "username" varchar(80) NOT NULL,

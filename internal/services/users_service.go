@@ -21,6 +21,30 @@ func NewUserService(repo repositories.UserRepository) *UserService {
 	return &UserService{BaseService: baseService}
 }
 
+// Create sobrescreve o método Create para adicionar hashing de senha.
+func (s *UserService) Create(c *gin.Context, userCreate models.UserCreate) (*models.User, error) {
+	// Gera um hash para a senha do usuário
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userCreate.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cria a entidade User com os dados do userCreateulário
+	user := models.User{
+		TenantID: userCreate.TenantID,
+		Username: userCreate.Username,
+		Name:     userCreate.Name,
+		Email:    userCreate.Email,
+		Password: string(hashedPassword),
+	}
+
+	if err := s.Repo.Create(c, &user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 // Authenticate verifica as credenciais de um usuário.
 func (s *UserService) Authenticate(c *gin.Context, email, password, origin string) (*models.User, error) {
 	user, err := s.Repo.FindByEmail(c, email, origin)
