@@ -18,6 +18,9 @@ import (
 	"gorm.io/gorm"
 )
 
+type CasbinServiceInterface interface {
+	CheckPermission(sub, obj, act string) bool
+}
 type CasbinService struct {
 	enforcer *casbin.Enforcer
 }
@@ -62,11 +65,12 @@ func NewCasbinService(db *gorm.DB) (*CasbinService, error) {
 	return &CasbinService{enforcer: enforcer}, nil
 }
 
+// CheckPermission logs and verifies permissions using Casbin enforcer
 func (cs *CasbinService) CheckPermission(sub, obj, act string) bool {
 	log.Printf("Checking permission for sub: %s, obj: %s, act: %s", sub, obj, act)
 	ok, err := cs.enforcer.Enforce(sub, obj, act)
 	if err != nil {
-		log.Printf("Erro ao verificar permissão: %v", err)
+		log.Printf("Error while checking permission: %v", err)
 		return false
 	}
 	log.Printf("Permission result for %s, %s, %s: %t", sub, obj, act, ok)

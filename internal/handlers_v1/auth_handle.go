@@ -9,20 +9,21 @@ import (
 	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
 	"github.com/jeancarlosdanese/go-base-api/internal/logging"
 	"github.com/jeancarlosdanese/go-base-api/internal/services"
+	"github.com/jeancarlosdanese/go-base-api/internal/utils"
 )
 
 // AuthHandler struct para segurar os serviços necessários.
 type AuthHandler struct {
-	userService       *services.UserService
-	tokenService      *services.TokenService
-	tokenRedisService *services.TokenRedisService
+	userService       services.UserServiceInterface
+	tokenService      services.TokenServiceInterface
+	tokenRedisService services.TokenRedisServiceInterface
 }
 
 // NewAuthHandler cria uma nova instância de AuthHandler.
 func NewAuthHandler(
-	userService *services.UserService,
-	tokenService *services.TokenService,
-	tokenRedisService *services.TokenRedisService) *AuthHandler {
+	userService services.UserServiceInterface,
+	tokenService services.TokenServiceInterface,
+	tokenRedisService services.TokenRedisServiceInterface) *AuthHandler {
 	return &AuthHandler{
 		userService:       userService,
 		tokenService:      tokenService,
@@ -48,7 +49,7 @@ func (h *AuthHandler) RegisterRoutes(router *gin.RouterGroup) {
 // @Failure 400 {object} map[string]string "Erro de autenticação"
 // @Router /api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
-	origin := c.Request.Header.Get("Origin")
+	origin := c.GetString("Origin")
 	if origin == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Origem não fornecida"})
 		return
@@ -62,13 +63,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	user, err := h.userService.Authenticate(c, loginForm.Email, loginForm.Password, origin)
 	if err != nil {
-		logging.WarnLogger.Printf("Erro ao autenticar usuário: %v", err)
-		if err.Error() == "usuário ou origem não encontrado" || err.Error() == "senha inválida" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Credenciais inválidas"})
-		} else {
-			logging.ErrorLogger.Printf("Erro interno do servidor ao autenticar usuário: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno do servidor"})
-		}
+		utils.HandleAuthenticationError(c, err)
 		return
 	}
 
@@ -100,7 +95,7 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.Repo.GetOnlyByID(c, userID)
+	user, err := h.userService.GetOnlyByID(c, userID)
 	if err != nil {
 		logging.WarnLogger.Printf("Erro ao buscar usuário: %v", err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não encontrado"})
@@ -122,7 +117,7 @@ func (h *AuthHandler) generateAndSaveTokens(c *gin.Context, user *models.User) {
 		return
 	}
 
-	if err := h.tokenRedisService.SaveTokenDataRedis(user, accessToken, refreshToken, h.tokenService.AccessDuration); err != nil {
+	if err := h.tokenRedisService.SaveTokenDataRedis(user, accessToken, refreshToken, h.tokenService.GetAccessDuration()); err != nil {
 		logging.ErrorLogger.Printf("Falha ao salvar informações do usuário no Redis: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Falha ao salvar informações do usuário no Redis"})
 		return

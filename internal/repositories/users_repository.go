@@ -15,7 +15,7 @@ import (
 
 // UserRepository é uma interface que estende a interface Repository para operações específicas do User.
 type UserRepository interface {
-	Repository[models.User]
+	AuthRepositoryInterface[models.User]
 	FindByEmail(c *gin.Context, email, origin string) (*models.User, error)
 	GetOnlyByID(c *gin.Context, id uuid.UUID) (*models.User, error)
 }
@@ -27,7 +27,7 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 }
 
 func (r *GormAuthRepository[Entity]) FindByEmail(c *gin.Context, email, origin string) (*models.User, error) {
-	var user models.User
+	var user *models.User
 	formattedOrigin := fmt.Sprintf(`["%s"]`, origin)
 	err := r.DB.WithContext(c).
 		Preload("Roles.Policies.Endpoint").
@@ -42,21 +42,22 @@ func (r *GormAuthRepository[Entity]) FindByEmail(c *gin.Context, email, origin s
 		return nil, err
 	}
 
-	if err := r.DB.WithContext(c).
-		Preload("Endpoint").
-		Where("user_id = ?", user.ID).
-		Find(&user.SpecialPolicies).Error; err != nil {
-		logging.ErrorLogger.Printf("Erro ao carregar special policies para o usuário: %v", err)
-		return nil, err
+	if user != nil {
+
+		if err := r.DB.WithContext(c).
+			Preload("Endpoint").
+			Where("user_id = ?", user.ID).
+			Find(&user.SpecialPolicies).Error; err != nil {
+			logging.ErrorLogger.Printf("Erro ao carregar special policies para o usuário: %v", err)
+			return nil, err
+		}
 	}
 
-	return &user, nil
+	return user, nil
 }
 
-func (r *GormAuthRepository[Entity]) GetOnlyByID(c *gin.Context, id uuid.UUID) (*Entity, error) {
-	fmt.Printf("UserID: %v", id)
-
-	var entity Entity
+func (r *GormAuthRepository[Entity]) GetOnlyByID(c *gin.Context, id uuid.UUID) (*models.User, error) {
+	var entity models.User
 	err := r.DB.WithContext(c).First(&entity, id).Error
 	if err != nil {
 		return nil, err

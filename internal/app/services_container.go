@@ -16,18 +16,23 @@ import (
 )
 
 type ServicesContainer struct {
-	CasbinService     *services.CasbinService
-	TokenService      *services.TokenService
-	TenantService     *services.TenantService
-	UserService       *services.UserService
-	RedisService      *services.RedisService
-	TokenRedisService *services.TokenRedisService
+	CasbinService     services.CasbinServiceInterface
+	TokenService      services.TokenServiceInterface
+	TenantService     services.TenantServiceInterface
+	UserService       services.UserServiceInterface
+	RedisService      services.RedisServiceInterface
+	TokenRedisService services.TokenRedisServiceInterface
 	DB                *gorm.DB
 }
 
 func NewServicesContainer() (*ServicesContainer, error) {
-	if err := godotenv.Load(); err != nil {
-		log.Printf("Warning: .env file not found")
+	// Carrega .env ou .env.test com base na variável GO_ENV
+	envFile := ".env"
+	if os.Getenv("GO_ENV") == "test" {
+		envFile = ".env.test"
+	}
+	if err := godotenv.Load(envFile); err != nil {
+		log.Printf("Warning: %s file not found", envFile)
 	}
 
 	gormDB, err := db.NewDatabaseConnection()

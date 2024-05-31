@@ -3,12 +3,14 @@
 package handlers_v1
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
 	contextkeys "github.com/jeancarlosdanese/go-base-api/internal/domain/context_keys"
 	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
 	"github.com/jeancarlosdanese/go-base-api/internal/services"
+	"github.com/jeancarlosdanese/go-base-api/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -16,21 +18,21 @@ import (
 
 // UsersHandler struct holds the services that are needed.
 type UsersHandler struct {
-	service *services.UserService
+	userService services.UserServiceInterface
 }
 
-func NewUsersHandler(service *services.UserService) *UsersHandler {
-	return &UsersHandler{service: service}
+func NewUsersHandler(userService services.UserServiceInterface) *UsersHandler {
+	return &UsersHandler{userService: userService}
 }
 
 // RegisterRoutes registra as rotas para users.
 func (h *UsersHandler) RegisterRoutes(router *gin.RouterGroup) {
-	router.GET("", h.getAll)
-	router.GET("/:id", h.getById)
-	router.POST("", h.create)
-	router.PUT("/:id", h.update)
-	router.PATCH("/:id", h.updatePatch)
-	router.DELETE("/:id", h.delete)
+	router.GET("", h.GetAll)
+	router.GET("/:id", h.GetById)
+	router.POST("", h.Create)
+	router.PUT("/:id", h.Update)
+	router.PATCH("/:id", h.UpdatePartial)
+	router.DELETE("/:id", h.Delete)
 }
 
 // getAllUsers busca todos os Users
@@ -42,8 +44,8 @@ func (h *UsersHandler) RegisterRoutes(router *gin.RouterGroup) {
 // @Success 200 {array} models.User "Lista de Users"
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
 // @Router /api/v1/users [get]
-func (h *UsersHandler) getAll(c *gin.Context) {
-	users, err := h.service.GetAll(c)
+func (h *UsersHandler) GetAll(c *gin.Context) {
+	users, err := h.userService.GetAll(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -62,10 +64,11 @@ func (h *UsersHandler) getAll(c *gin.Context) {
 // @Failure 400 {object} models.HTTPError "Erro de Formato de Solicitação"
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
 // @Router /api/v1/users [post]
-func (h *UsersHandler) create(c *gin.Context) {
+func (h *UsersHandler) Create(c *gin.Context) {
 	tenantID, exists := c.Get(string(contextkeys.TenantIDKey))
 	if !exists {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Tenant não encontrado"})
+		return
 	}
 
 	var tenantUUID uuid.UUID
@@ -80,6 +83,7 @@ func (h *UsersHandler) create(c *gin.Context) {
 		tenantUUID = v
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "TenantID não é do tipo esperado (string ou uuid.UUID"})
+		return
 	}
 
 	var userCreate models.UserCreate
@@ -89,7 +93,7 @@ func (h *UsersHandler) create(c *gin.Context) {
 	}
 	userCreate.TenantID = tenantUUID
 
-	user, err := h.service.Create(c, userCreate)
+	user, err := h.userService.CreateUserWithPassword(c, &userCreate)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -109,14 +113,14 @@ func (h *UsersHandler) create(c *gin.Context) {
 // @Failure 404 {object} models.HTTPError "User not found"
 // @Failure 400 {object} models.HTTPError "Invalid UUID format"
 // @Router /api/v1/users/{id} [get]
-func (h *UsersHandler) getById(c *gin.Context) {
+func (h *UsersHandler) GetById(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID format"})
 		return
 	}
 
-	user, err := h.service.GetByID(c, id)
+	user, err := h.userService.GetByID(c, id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
@@ -136,10 +140,15 @@ func (h *UsersHandler) getById(c *gin.Context) {
 // @Failure 400 {object} models.HTTPError "ID Inválido ou Erro de Formato de Solicitação"
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
 // @Router /api/v1/users/{id} [put]
-func (h *UsersHandler) update(c *gin.Context) {
+func (h *UsersHandler) Update(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id")) // Extrair o ID do recurso da URL
 	if err != nil {
 		log.Fatalf("Invalid UUID: %v", err)
+	}
+
+	tenantID, exists := c.Get(string(contextkeys.TenantIDKey))
+	if !exists {
+		log.Fatalf("tenant não encontrado")
 	}
 
 	var user models.User
@@ -149,14 +158,23 @@ func (h *UsersHandler) update(c *gin.Context) {
 		return
 	}
 
+	tenantUUID, err := utils.TryParseUUID(c, tenantID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+
 	// Opcional: Definir o ID do user com o valor extraído da URL, garantindo que o recurso correto seja atualizado.
 	user.ID = id
+	user.TenantID = tenantUUID
+	fmt.Printf("UserID: %v", user)
 
-	if err := h.service.Update(c, &user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	userUpdated, err := h.userService.Update(c, id, &user)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
-	c.JSON(http.StatusOK, user)
+
+	c.JSON(http.StatusOK, userUpdated)
 }
 
 // updateUserPatch atualiza parcialmente um user existente usando PATCH.
@@ -171,7 +189,7 @@ func (h *UsersHandler) update(c *gin.Context) {
 // @Failure 400 {object} models.HTTPError "ID Inválido ou Erro de Formato de Solicitação"
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
 // @Router /api/v1/users/{id} [patch]
-func (h *UsersHandler) updatePatch(c *gin.Context) {
+func (h *UsersHandler) UpdatePartial(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id")) // Extrair o ID do recurso da URL
 	if err != nil {
 		log.Fatalf("Invalid UUID: %v", err)
@@ -185,14 +203,15 @@ func (h *UsersHandler) updatePatch(c *gin.Context) {
 	}
 
 	// Remover campos que não devem ser atualizáveis
-	delete(updateData, "cpf_cnpj")
+	// delete(updateData, "cpf_cnpj")
 
-	if err := h.service.UpdatePartial(c, id, updateData); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	userPatched, err := h.userService.UpdatePartial(c, id, updateData)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
+	c.JSON(http.StatusOK, userPatched)
 }
 
 // deleteUser exclui um user.
@@ -206,13 +225,13 @@ func (h *UsersHandler) updatePatch(c *gin.Context) {
 // @Failure 400 {object} models.HTTPError "ID Inválido"
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
 // @Router /api/v1/users/{id} [delete]
-func (h *UsersHandler) delete(c *gin.Context) {
+func (h *UsersHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		log.Fatalf("Invalid UUID: %v", err)
 	}
 
-	if err := h.service.Delete(c, id); err != nil {
+	if err := h.userService.Delete(c, id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

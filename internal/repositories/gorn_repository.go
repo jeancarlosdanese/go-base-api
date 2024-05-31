@@ -6,20 +6,21 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // Repository define as operações básicas de um repositório com tipo genérico para entidade.
-type Repository[Entity any] interface {
-	Create(c *gin.Context, entity *Entity) error
-	Update(c *gin.Context, entity *Entity) error
-	UpdatePartial(c *gin.Context, id uuid.UUID, updateData map[string]interface{}) error
+type GormRepositoryInterface[Entity any] interface {
+	Create(c *gin.Context, entity *Entity) (*Entity, error)
+	Update(c *gin.Context, id uuid.UUID, entity *Entity) (*Entity, error)
+	UpdatePartial(c *gin.Context, id uuid.UUID, updateData map[string]interface{}) (*Entity, error)
 	Delete(c *gin.Context, id uuid.UUID) error
 	GetAll(c *gin.Context) ([]Entity, error)
 	GetByID(c *gin.Context, id uuid.UUID) (*Entity, error)
 }
 
 // NewGormRepository cria uma nova instância de GormRepository.
-func NewGormRepository[Entity any](db *gorm.DB) Repository[Entity] {
+func NewGormRepository[Entity any](db *gorm.DB) GormRepositoryInterface[Entity] {
 	return &GormRepository[Entity]{DB: db}
 }
 
@@ -27,17 +28,36 @@ type GormRepository[Entity any] struct {
 	DB *gorm.DB
 }
 
-func (r *GormRepository[Entity]) Create(c *gin.Context, entity *Entity) error {
-	return r.DB.WithContext(c).Create(entity).Error
+func (r *GormRepository[Entity]) Create(c *gin.Context, entity *Entity) (*Entity, error) {
+	err := r.DB.WithContext(c).Create(entity).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return entity, nil
 }
 
-func (r *GormRepository[Entity]) Update(c *gin.Context, entity *Entity) error {
-	return r.DB.WithContext(c).Save(entity).Error
+func (r *GormRepository[Entity]) Update(c *gin.Context, id uuid.UUID, entity *Entity) (*Entity, error) {
+	err := r.DB.WithContext(c).Where("id = ?", id).Save(entity).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return entity, nil
 }
 
-func (r *GormRepository[Entity]) UpdatePartial(c *gin.Context, id uuid.UUID, updateData map[string]interface{}) error {
-	entity := new(Entity) // Cria uma referência para o tipo Entity
-	return r.DB.WithContext(c).Model(&entity).Where("id = ?", id).Updates(updateData).Error
+func (r *GormRepository[Entity]) UpdatePartial(c *gin.Context, id uuid.UUID, updateData map[string]interface{}) (*Entity, error) {
+	var entity Entity // Cria uma referência para o tipo Entity
+
+	err := r.DB.WithContext(c).
+		Model(&entity).
+		Clauses(clause.Returning{}).
+		Where("id = ?", id).
+		Updates(updateData).Error
+	if err != nil {
+		return nil, err
+	}
+	return &entity, nil
 }
 
 func (r *GormRepository[Entity]) Delete(c *gin.Context, id uuid.UUID) error {

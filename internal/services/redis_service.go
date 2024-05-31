@@ -10,6 +10,10 @@ import (
 	"github.com/jeancarlosdanese/go-base-api/internal/db"
 )
 
+type RedisServiceInterface interface {
+	Set(key string, value interface{}, expiration time.Duration) error
+	Get(key string) (string, error)
+}
 type RedisService struct {
 	client *redis.Client
 }

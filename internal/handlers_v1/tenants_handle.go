@@ -15,11 +15,11 @@ import (
 
 // TenantsHandler struct holds the services that are needed.
 type TenantsHandler struct {
-	service *services.TenantService
+	tenantService services.TenantServiceInterface
 }
 
-func NewTenantsHandler(service *services.TenantService) *TenantsHandler {
-	return &TenantsHandler{service: service}
+func NewTenantsHandler(tenantService services.TenantServiceInterface) *TenantsHandler {
+	return &TenantsHandler{tenantService: tenantService}
 }
 
 // RegisterRoutes registra as rotas para tenants.
@@ -43,7 +43,7 @@ func (h *TenantsHandler) RegisterRoutes(router *gin.RouterGroup) {
 // @Router /api/v1/tenants [get]
 func (h *TenantsHandler) GetAll(c *gin.Context) {
 	// ctx := context.Background()
-	tenants, err := h.service.GetAll(c)
+	tenants, err := h.tenantService.GetAll(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -63,14 +63,15 @@ func (h *TenantsHandler) GetAll(c *gin.Context) {
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
 // @Router /api/v1/tenants [post]
 func (h *TenantsHandler) Create(c *gin.Context) {
-	var tenant models.Tenant
-	if err := c.ShouldBindJSON(&tenant); err != nil {
+	var tenantCreate models.Tenant
+	if err := c.ShouldBindJSON(&tenantCreate); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// ctx := context.Background()
-	if err := h.service.Create(c, &tenant); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+
+	tenant, err := h.tenantService.Create(c, &tenantCreate)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Tenant not found"})
 		return
 	}
 	c.JSON(http.StatusCreated, tenant)
@@ -94,8 +95,7 @@ func (h *TenantsHandler) GetById(c *gin.Context) {
 		return
 	}
 
-	// ctx := context.Background()
-	tenant, err := h.service.GetByID(c, id)
+	tenant, err := h.tenantService.GetByID(c, id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Tenant not found"})
 		return
@@ -131,12 +131,13 @@ func (h *TenantsHandler) Update(c *gin.Context) {
 	// Opcional: Definir o ID do tenant com o valor extraído da URL, garantindo que o recurso correto seja atualizado.
 	tenant.ID = id
 
-	// ctx := context.Background()
-	if err := h.service.Update(c, &tenant); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	tenantUpdated, err := h.tenantService.Update(c, id, &tenant)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Tenant not found"})
 		return
 	}
-	c.JSON(http.StatusOK, tenant)
+
+	c.JSON(http.StatusOK, tenantUpdated)
 }
 
 // updateTenantPatch atualiza parcialmente um tenant existente usando PATCH.
@@ -165,15 +166,15 @@ func (h *TenantsHandler) UpdatePatch(c *gin.Context) {
 	}
 
 	// Remover campos que não devem ser atualizáveis
-	delete(updateData, "cpf_cnpj")
+	// delete(updateData, "cpf_cnpj")
 
-	// ctx := context.Background()
-	if err := h.service.UpdatePartial(c, id, updateData); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	tenantPatched, err := h.tenantService.UpdatePartial(c, id, updateData)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Tenant not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Tenant updated successfully"})
+	c.JSON(http.StatusOK, tenantPatched)
 }
 
 // deleteTenant exclui um tenant.
@@ -194,7 +195,7 @@ func (h *TenantsHandler) Delete(c *gin.Context) {
 	}
 
 	// ctx := context.Background()
-	if err := h.service.Delete(c, id); err != nil {
+	if err := h.tenantService.Delete(c, id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

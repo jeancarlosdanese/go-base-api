@@ -7,6 +7,10 @@ import (
 	"github.com/jeancarlosdanese/go-base-api/internal/repositories"
 )
 
+// TenantServiceInterface define as operações adicionais do TenantService além das operações CRUD básicas.
+type TenantServiceInterface interface {
+	BaseServiceInterface[models.Tenant]
+}
 type TenantService struct {
 	*BaseService[models.Tenant, repositories.TenantRepository]
 }

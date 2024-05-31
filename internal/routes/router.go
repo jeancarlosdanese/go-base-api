@@ -31,6 +31,7 @@ func SetupRouter(r *gin.Engine, sc *app.ServicesContainer) {
 
 	// Configuração de rotas não autenticadas
 	authGroup := v1.Group("/auth")
+	authGroup.Use(OriginMiddleware())
 	{
 		authHandler := handlers_v1.NewAuthHandler(sc.UserService, sc.TokenService, sc.TokenRedisService)
 		// auth.POST("/login", authHandler.Login) // Registra diretamente a rota POST /login no grupo /auth
@@ -75,13 +76,18 @@ func extractToken(c *gin.Context) string {
 func OriginMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
-		c.Set("origin", origin) // Armazenar no contexto
+
+		// Remover o protocolo (http:// ou https://)
+		origin = strings.TrimPrefix(origin, "http://")
+		origin = strings.TrimPrefix(origin, "https://")
+
+		c.Set("Origin", origin) // Armazenar no contexto
 
 		c.Next() // continuar com a cadeia de middlewares/handlers
 	}
 }
 
-func AuthMiddleware(tokenService *services.TokenService, tokenRedisService *services.TokenRedisService) gin.HandlerFunc {
+func AuthMiddleware(tokenService services.TokenServiceInterface, tokenRedisService services.TokenRedisServiceInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Capturar o tempo de início
 		start := time.Now()
@@ -158,7 +164,7 @@ func RoleMiddleware(requiredRoles ...string) gin.HandlerFunc {
 }
 
 // PolicyMiddleware verifica permissões específicas para ações ou recursos usando Casbin.
-func PolicyMiddleware(casbinService *services.CasbinService) gin.HandlerFunc {
+func PolicyMiddleware(casbinService services.CasbinServiceInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenData, exists := c.Get(string(contextkeys.TokenDataKey))
 		if !exists {
@@ -182,20 +188,22 @@ func PolicyMiddleware(casbinService *services.CasbinService) gin.HandlerFunc {
 	}
 }
 
-// checkPermissions tenta verificar as permissões com o ID do usuário e suas roles
-func checkPermissions(tokenDataRedis *models.TokenDataRedis, casbinService *services.CasbinService, obj, act string) bool {
-	// Verifica permissões especiais usando o ID do usuário
-	if casbinService.CheckPermission(tokenDataRedis.User.ID, obj, act) {
+// checkPermissions tries to verify permissions using the user's ID and their roles
+func checkPermissions(tokenDataRedis *models.TokenDataRedis, casbinService services.CasbinServiceInterface, obj, act string) bool {
+	userID := fmt.Sprintf("%v", tokenDataRedis.User.ID) // Ensure user ID is converted to string
+
+	// Verify special permissions using the user ID
+	if casbinService.CheckPermission(userID, obj, act) {
 		return true
 	}
 
-	// Verifica permissões baseadas nas roles
+	// Check permissions based on the roles
 	for _, role := range tokenDataRedis.User.Roles {
 		if casbinService.CheckPermission(role, obj, act) {
 			return true
 		}
 	}
 
-	// Nenhuma permissão encontrada
+	// No permission found
 	return false
 }

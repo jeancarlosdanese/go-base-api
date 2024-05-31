@@ -10,6 +10,12 @@ import (
 	"github.com/google/uuid"
 )
 
+type TokenServiceInterface interface {
+	CreateTokens(userID uuid.UUID, roles []string, permissions []string) (string, string, error)
+	RefreshTokens(refreshToken string) (uuid.UUID, error)
+	ValidateToken(tokenString string) (*jwt.Token, error)
+	GetAccessDuration() time.Duration
+}
 type TokenService struct {
 	SecretKey       []byte
 	AccessDuration  time.Duration
@@ -103,4 +109,8 @@ func (t *TokenService) ValidateToken(tokenString string) (*jwt.Token, error) {
 	}
 
 	return token, nil
+}
+
+func (t *TokenService) GetAccessDuration() time.Duration {
+	return t.AccessDuration
 }

@@ -10,11 +10,17 @@ import (
 	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
 )
 
-type TokenRedisService struct {
-	*RedisService
+type TokenRedisServiceInterface interface {
+	SaveTokenDataRedis(user *models.User, token, refreshToken string, accessDuration time.Duration) error
+	ValidateRefreshToken(refreshToken string) (*models.TokenDataRedis, error)
+	GetTokenDataRedisFromToken(token string) (*models.TokenDataRedis, error)
 }
 
-func NewTokenRedisService(redisService *RedisService) *TokenRedisService {
+type TokenRedisService struct {
+	RedisService RedisServiceInterface
+}
+
+func NewTokenRedisService(redisService RedisServiceInterface) *TokenRedisService {
 	return &TokenRedisService{
 		RedisService: redisService,
 	}
@@ -26,14 +32,14 @@ func (s *TokenRedisService) SaveTokenDataRedis(user *models.User, token, refresh
 	if err != nil {
 		return err
 	}
-	if err := s.Set("token:"+token, tokenData, accessDuration); err != nil {
+	if err := s.RedisService.Set("token:"+token, tokenData, accessDuration); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *TokenRedisService) ValidateRefreshToken(refreshToken string) (*models.TokenDataRedis, error) {
-	result, err := s.Get("refresh_token:" + refreshToken)
+	result, err := s.RedisService.Get("refresh_token:" + refreshToken)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +51,7 @@ func (s *TokenRedisService) ValidateRefreshToken(refreshToken string) (*models.T
 }
 
 func (s *TokenRedisService) GetTokenDataRedisFromToken(token string) (*models.TokenDataRedis, error) {
-	result, err := s.Get("token:" + token)
+	result, err := s.RedisService.Get("token:" + token)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +103,6 @@ func prepareTokenDataRedis(user *models.User, token, refreshToken string) models
 }
 
 func policyRoleToString(policy *models.PolicyRole) string {
-	fmt.Printf("%s:%s:%s", fmt.Sprintf("%d", policy.RoleID), policy.Endpoint.Name, policy.Actions)
 	return fmt.Sprintf("%s:%s", policy.Endpoint.Name, policy.Actions)
 }
 

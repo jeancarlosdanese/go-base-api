@@ -9,7 +9,7 @@ import (
 
 // TenantRepository é uma interface que estende a interface Repository para operações específicas do Tenant.
 type TenantRepository interface {
-	Repository[models.Tenant]
+	GormRepositoryInterface[models.Tenant]
 }
 
 // NewTenantRepository cria uma nova instância de um repositório que implementa TenantRepository.
