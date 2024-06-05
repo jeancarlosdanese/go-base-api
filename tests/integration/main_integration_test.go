@@ -1,7 +1,11 @@
+// tests/integration/main_integration_test.go
+
 package integration_test
 
 import (
+	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,6 +13,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/joho/godotenv"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -20,7 +25,11 @@ func TestMain(m *testing.M) {
 	var err error
 
 	// Configura a conexão com o banco de dados de teste
-	dsn := "postgres://hyberica:hyberica@localhost:5432/go_ead_api_test?sslmode=disable"
+	dsn, err := getDSN()
+	if err != nil {
+		log.Fatalf("Failed GetDSN: %v", err)
+	}
+
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
@@ -34,7 +43,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// Configura e executa as migrações
-	if err := runMigrations("file://"+getMigrationPath(), dsn); err != nil {
+	if err := applyMigrations("file://"+getMigrationPath(), dsn); err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
@@ -50,7 +59,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func runMigrations(migrationsDir, dsn string) error {
+func applyMigrations(migrationsDir, dsn string) error {
 	m, err := migrate.New(
 		migrationsDir,
 		dsn,
@@ -81,4 +90,25 @@ func getMigrationPath() string {
 		log.Fatal("Failed to get current directory")
 	}
 	return filepath.Join(dir, "../../migrations")
+}
+
+func getDSN() (string, error) {
+	envFile := ".env.test"
+	if err := godotenv.Load(envFile); err != nil {
+		return "", fmt.Errorf("warning: %s file not found: %w", envFile, err)
+	}
+
+	user := url.QueryEscape(os.Getenv("DB_USER"))
+	password := url.QueryEscape(os.Getenv("DB_PASSWORD"))
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
+
+	if user == "" || password == "" || host == "" || port == "" || dbName == "" {
+		return "", fmt.Errorf("database environment settings are not fully configured")
+	}
+
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&TimeZone=America/Sao_Paulo",
+		user, password, host, port, dbName)
+	return dsn, nil
 }
