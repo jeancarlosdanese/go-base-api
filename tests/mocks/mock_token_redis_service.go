@@ -16,24 +16,24 @@ type TokenRedisService struct {
 	mock.Mock
 }
 
-// GetTokenDataRedisFromToken provides a mock function with given fields: token
-func (_m *TokenRedisService) GetTokenDataRedisFromToken(token string) (*models.TokenDataRedis, error) {
+// GetUserRedisFromToken provides a mock function with given fields: token
+func (_m *TokenRedisService) GetUserRedisFromToken(token string) (*models.UserRedis, error) {
 	ret := _m.Called(token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetTokenDataRedisFromToken")
+		panic("no return value specified for GetUserRedisFromToken")
 	}
 
-	var r0 *models.TokenDataRedis
+	var r0 *models.UserRedis
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*models.TokenDataRedis, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (*models.UserRedis, error)); ok {
 		return rf(token)
 	}
-	if rf, ok := ret.Get(0).(func(string) *models.TokenDataRedis); ok {
+	if rf, ok := ret.Get(0).(func(string) *models.UserRedis); ok {
 		r0 = rf(token)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.TokenDataRedis)
+			r0 = ret.Get(0).(*models.UserRedis)
 		}
 	}
 
@@ -46,12 +46,12 @@ func (_m *TokenRedisService) GetTokenDataRedisFromToken(token string) (*models.T
 	return r0, r1
 }
 
-// SaveTokenDataRedis provides a mock function with given fields: user, token, refreshToken, accessDuration
-func (_m *TokenRedisService) SaveTokenDataRedis(user *models.User, token string, refreshToken string, accessDuration time.Duration) error {
+// SaveUserRedis provides a mock function with given fields: user, token, refreshToken, accessDuration
+func (_m *TokenRedisService) SaveUserRedis(user *models.User, token string, refreshToken string, accessDuration time.Duration) error {
 	ret := _m.Called(user, token, refreshToken, accessDuration)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SaveTokenDataRedis")
+		panic("no return value specified for SaveUserRedis")
 	}
 
 	var r0 error
@@ -65,23 +65,23 @@ func (_m *TokenRedisService) SaveTokenDataRedis(user *models.User, token string,
 }
 
 // ValidateRefreshToken provides a mock function with given fields: refreshToken
-func (_m *TokenRedisService) ValidateRefreshToken(refreshToken string) (*models.TokenDataRedis, error) {
+func (_m *TokenRedisService) ValidateRefreshToken(refreshToken string) (*models.UserRedis, error) {
 	ret := _m.Called(refreshToken)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ValidateRefreshToken")
 	}
 
-	var r0 *models.TokenDataRedis
+	var r0 *models.UserRedis
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*models.TokenDataRedis, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (*models.UserRedis, error)); ok {
 		return rf(refreshToken)
 	}
-	if rf, ok := ret.Get(0).(func(string) *models.TokenDataRedis); ok {
+	if rf, ok := ret.Get(0).(func(string) *models.UserRedis); ok {
 		r0 = rf(refreshToken)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.TokenDataRedis)
+			r0 = ret.Get(0).(*models.UserRedis)
 		}
 	}
 

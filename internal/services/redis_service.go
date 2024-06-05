@@ -4,6 +4,7 @@ package services
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -14,22 +15,31 @@ type RedisServiceInterface interface {
 	Set(key string, value interface{}, expiration time.Duration) error
 	Get(key string) (string, error)
 }
+
 type RedisService struct {
-	client *redis.Client
+	Client *redis.Client
 }
 
 func NewRedisService() *RedisService {
 	return &RedisService{
-		client: db.GetRedisClient(),
+		Client: db.GetRedisClient(),
 	}
 }
 
-func (s *RedisService) Set(key string, value interface{}, expiration time.Duration) error {
-	ctx := context.Background()
-	return s.client.Set(ctx, key, value, expiration).Err()
+func (r *RedisService) Set(key string, value interface{}, expiration time.Duration) error {
+	// log.Printf("INFO: Setting key in Redis: %s", key)
+	err := r.Client.Set(context.Background(), key, value, expiration).Err()
+	if err != nil {
+		log.Printf("ERROR: Error setting key in Redis: %v", err)
+	}
+	return err
 }
 
-func (s *RedisService) Get(key string) (string, error) {
-	ctx := context.Background()
-	return s.client.Get(ctx, key).Result()
+func (r *RedisService) Get(key string) (string, error) {
+	// log.Printf("INFO: Getting key from Redis: %s", key)
+	result, err := r.Client.Get(context.Background(), key).Result()
+	if err != nil {
+		log.Printf("ERROR: Error getting key from Redis: %v", err)
+	}
+	return result, err
 }

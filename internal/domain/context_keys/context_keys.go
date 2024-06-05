@@ -12,14 +12,16 @@ import (
 type ContextKey string
 
 const (
-	TenantIDKey  ContextKey = "TenantID"
-	TokenDataKey ContextKey = "TokenData"
+	TenantIDKey   ContextKey = "TenantID"
+	UserDataKey   ContextKey = "UserData"
+	TenantDataKey ContextKey = "TenantData"
 )
 
 // ValidContextKeys mapeia as ações válidas para validação rápida.
 var ValidContextKeys = map[ContextKey]bool{
-	TenantIDKey:  true,
-	TokenDataKey: true,
+	TenantIDKey:   true,
+	UserDataKey:   true,
+	TenantDataKey: true,
 }
 
 // validateContextKey verifica se o valor do ContextKey é um dos definidos como válidos.

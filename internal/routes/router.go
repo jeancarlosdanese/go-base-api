@@ -29,6 +29,14 @@ func SetupRouter(r *gin.Engine, sc *app.ServicesContainer) {
 	// Definindo o grupo de rotas para a versão 1 da API
 	v1 := r.Group("/api/v1")
 
+	// Teste de rota com autenticação vi X-API-Key
+	authApiKeyGroup := v1.Group("/auth-apikey")
+	authApiKeyGroup.Use(XApiKeyMiddleware(sc.ApiKeyRedisService))
+	{
+		authApiKeyHandler := handlers_v1.NewAuthApiKeyHandler()
+		authApiKeyHandler.RegisterRoutes(authApiKeyGroup)
+	}
+
 	// Configuração de rotas não autenticadas
 	authGroup := v1.Group("/auth")
 	authGroup.Use(OriginMiddleware())
@@ -87,6 +95,40 @@ func OriginMiddleware() gin.HandlerFunc {
 	}
 }
 
+// XApiKeyMiddleware é um Middleware para verificar a API Key
+func XApiKeyMiddleware(apiKeyRedisService services.ApiKeyRedisServiceInterface) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
+
+		// Remover o protocolo (http:// ou https://)
+		origin = strings.TrimPrefix(origin, "http://")
+		origin = strings.TrimPrefix(origin, "https://")
+
+		c.Set("Origin", origin) // Armazenar no contexto
+
+		apiKey := c.GetHeader("X-API-Key")
+		if apiKey == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "API Key inválida"})
+			return
+		}
+
+		// Tenta recuperar as informações do Tenant do Redis
+		tenantRedis, err := apiKeyRedisService.GetTenantRedisFromApiKey(apiKey, origin)
+		if err != nil || tenantRedis == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Falha ao recuperar informações do Tenant"})
+			c.Abort()
+			return
+		}
+
+		// Configura o contexto com o usuário para uso posterior
+		c.Set(string(contextkeys.TenantDataKey), tenantRedis)
+		c.Set(string(contextkeys.TenantIDKey), tenantRedis.ID)
+
+		c.Next() // continuar com a cadeia de middlewares/handlers
+	}
+}
+
+// AuthMiddleware é um Midleware para verificar o Bearer Token
 func AuthMiddleware(tokenService services.TokenServiceInterface, tokenRedisService services.TokenRedisServiceInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Capturar o tempo de início
@@ -106,16 +148,16 @@ func AuthMiddleware(tokenService services.TokenServiceInterface, tokenRedisServi
 		}
 
 		// Tenta recuperar as informações do usuário do Redis
-		tokenDataRedis, err := tokenRedisService.GetTokenDataRedisFromToken(tokenString)
-		if err != nil || tokenDataRedis == nil {
+		userRedis, err := tokenRedisService.GetUserRedisFromToken(tokenString)
+		if err != nil || userRedis == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Falha ao recuperar informações do usuário"})
 			c.Abort()
 			return
 		}
 
 		// Configura o contexto com o usuário para uso posterior
-		c.Set(string(contextkeys.TokenDataKey), tokenDataRedis)
-		c.Set(string(contextkeys.TenantIDKey), tokenDataRedis.User.TenantID)
+		c.Set(string(contextkeys.UserDataKey), userRedis)
+		c.Set(string(contextkeys.TenantIDKey), userRedis.TenantID)
 		c.Next() // Prosseguir com a próxima função no pipeline
 		// Capturar o tempo de término
 		end := time.Now()
@@ -130,7 +172,7 @@ func AuthMiddleware(tokenService services.TokenServiceInterface, tokenRedisServi
 // RoleMiddleware verifica se o usuário possui as roles necessárias.
 func RoleMiddleware(requiredRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tokenData, exists := c.Get(string(contextkeys.TokenDataKey))
+		tokenData, exists := c.Get(string(contextkeys.UserDataKey))
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não autenticado"})
 			c.Abort()
@@ -138,9 +180,9 @@ func RoleMiddleware(requiredRoles ...string) gin.HandlerFunc {
 		}
 
 		// Asumindo que a estrutura User tem um campo Roles que é um slice de strings.
-		tokenDataRedis := tokenData.(*models.TokenDataRedis)
+		userRedis := tokenData.(*models.UserRedis)
 		isValidRole := false
-		for _, role := range tokenDataRedis.User.Roles {
+		for _, role := range userRedis.Roles {
 
 			for _, requiredRole := range requiredRoles {
 				if role == requiredRole {
@@ -166,19 +208,19 @@ func RoleMiddleware(requiredRoles ...string) gin.HandlerFunc {
 // PolicyMiddleware verifica permissões específicas para ações ou recursos usando Casbin.
 func PolicyMiddleware(casbinService services.CasbinServiceInterface) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tokenData, exists := c.Get(string(contextkeys.TokenDataKey))
+		tokenData, exists := c.Get(string(contextkeys.UserDataKey))
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não autenticado"})
 			c.Abort()
 			return
 		}
 
-		tokenDataRedis := tokenData.(*models.TokenDataRedis) // Certifique-se de que este cast está correto conforme sua implementação
+		userRedis := tokenData.(*models.UserRedis) // Certifique-se de que este cast está correto conforme sua implementação
 		obj := c.Request.URL.Path
 		act := c.Request.Method
 
 		// Tenta verificar permissões usando ID do usuário e roles
-		if !checkPermissions(tokenDataRedis, casbinService, obj, act) {
+		if !checkPermissions(userRedis, casbinService, obj, act) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Acesso negado - permissão insuficiente"})
 			c.Abort()
 			return
@@ -189,8 +231,8 @@ func PolicyMiddleware(casbinService services.CasbinServiceInterface) gin.Handler
 }
 
 // checkPermissions tries to verify permissions using the user's ID and their roles
-func checkPermissions(tokenDataRedis *models.TokenDataRedis, casbinService services.CasbinServiceInterface, obj, act string) bool {
-	userID := fmt.Sprintf("%v", tokenDataRedis.User.ID) // Ensure user ID is converted to string
+func checkPermissions(userRedis *models.UserRedis, casbinService services.CasbinServiceInterface, obj, act string) bool {
+	userID := fmt.Sprintf("%v", userRedis.ID) // Ensure user ID is converted to string
 
 	// Verify special permissions using the user ID
 	if casbinService.CheckPermission(userID, obj, act) {
@@ -198,7 +240,7 @@ func checkPermissions(tokenDataRedis *models.TokenDataRedis, casbinService servi
 	}
 
 	// Check permissions based on the roles
-	for _, role := range tokenDataRedis.User.Roles {
+	for _, role := range userRedis.Roles {
 		if casbinService.CheckPermission(role, obj, act) {
 			return true
 		}

@@ -48,6 +48,11 @@ func (m *MockTenantRepository) GetByID(c *gin.Context, id uuid.UUID) (*models.Te
 	return args.Get(0).(*models.Tenant), args.Error(1)
 }
 
+func (m *MockTenantRepository) FindByApiKey(apiKey, origin string) (*models.Tenant, error) {
+	args := m.Called(apiKey, origin)
+	return args.Get(0).(*models.Tenant), args.Error(1)
+}
+
 func TestTenantService_Create(t *testing.T) {
 	repo := new(MockTenantRepository)
 	service := services.NewTenantService(repo)

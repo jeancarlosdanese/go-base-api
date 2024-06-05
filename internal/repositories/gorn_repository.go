@@ -38,12 +38,21 @@ func (r *GormRepository[Entity]) Create(c *gin.Context, entity *Entity) (*Entity
 }
 
 func (r *GormRepository[Entity]) Update(c *gin.Context, id uuid.UUID, entity *Entity) (*Entity, error) {
-	err := r.DB.WithContext(c).Where("id = ?", id).Save(entity).Error
-	if err != nil {
+	// Inicia uma transação
+	tx := r.DB.WithContext(c)
+
+	// Primeiro, busca o tenant atual para assegurar que ele existe
+	var existing Entity
+	if err := tx.Where("id = ?", id).First(&existing).Error; err != nil {
+		return nil, err // Retorna erro se o tenant não for encontrado
+	}
+
+	// Atualiza apenas os campos que foram realmente passados na requisição
+	if err := tx.Model(&existing).Updates(entity).Error; err != nil {
 		return nil, err
 	}
 
-	return entity, nil
+	return &existing, nil
 }
 
 func (r *GormRepository[Entity]) UpdatePartial(c *gin.Context, id uuid.UUID, updateData map[string]interface{}) (*Entity, error) {

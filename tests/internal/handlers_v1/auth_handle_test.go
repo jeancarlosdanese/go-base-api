@@ -36,7 +36,7 @@ func TestAuthHandler_Login(t *testing.T) {
 		mockUserService.On("Authenticate", mock.Anything, "john@example.com", "password123", "localhost").Return(user, nil)
 		mockTokenService.On("GetAccessDuration").Return(time.Hour * 24) // Adicionando esta linha
 		mockTokenService.On("CreateTokens", user.ID, mock.Anything, mock.Anything).Return("access-token", "refresh-token", nil)
-		mockTokenRedisService.On("SaveTokenDataRedis", user, "access-token", "refresh-token", mock.AnythingOfType("time.Duration")).Return(nil)
+		mockTokenRedisService.On("SaveUserRedis", user, "access-token", "refresh-token", mock.AnythingOfType("time.Duration")).Return(nil)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -94,7 +94,7 @@ func TestAuthHandler_Login(t *testing.T) {
 		mockUserService.On("GetOnlyByID", mock.Anything, user.ID).Return(user, nil)
 		mockTokenService.On("GetAccessDuration").Return(time.Hour * 24) // Assume que o token expira em 24 horas
 		mockTokenService.On("CreateTokens", user.ID, mock.Anything, mock.Anything).Return("new-access-token", "new-refresh-token", nil)
-		mockTokenRedisService.On("SaveTokenDataRedis", user, "new-access-token", "new-refresh-token", mock.AnythingOfType("time.Duration")).Return(nil)
+		mockTokenRedisService.On("SaveUserRedis", user, "new-access-token", "new-refresh-token", mock.AnythingOfType("time.Duration")).Return(nil)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)

@@ -42,15 +42,21 @@ func (r *GormAuthRepository[Entity]) Update(c *gin.Context, id uuid.UUID, entity
 		return nil, fmt.Errorf("tenant não encontrado")
 	}
 
-	fmt.Printf("\nGormAuthRepository: %v\n", entity)
+	// Inicia uma transação
+	tx := r.DB.WithContext(c)
 
-	// Inclui a cláusula de tenantID na consulta de atualização
-	err := r.DB.WithContext(c).Model(entity).Where("tenant_id = ?", tenantID).Where("id = ?", id).Save(entity).Error
-	if err != nil {
+	// Primeiro, busca o tenant atual para assegurar que ele existe
+	var existing Entity
+	if err := tx.Where("tenant_id = ?", tenantID).Where("id = ?", id).First(&existing).Error; err != nil {
+		return nil, err // Retorna erro se o tenant não for encontrado
+	}
+
+	// Atualiza apenas os campos que foram realmente passados na requisição
+	if err := tx.Model(&existing).Updates(entity).Error; err != nil {
 		return nil, err
 	}
 
-	return entity, nil
+	return &existing, nil
 }
 
 func (r *GormAuthRepository[Entity]) UpdatePartial(c *gin.Context, id uuid.UUID, updateData map[string]interface{}) (*Entity, error) {

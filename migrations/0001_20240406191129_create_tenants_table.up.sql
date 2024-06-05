@@ -22,6 +22,7 @@ CREATE TABLE "public"."tenants" (
     "email" varchar(100),
     "phone" varchar(15),
     "cell_phone" varchar(15),
+    "api_key" varchar(254),
     "allowed_origins" jsonb,
     "status" "public"."status_type" NOT NULL DEFAULT 'ATIVO'::status_type,
     PRIMARY KEY ("id")

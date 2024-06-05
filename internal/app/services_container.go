@@ -16,13 +16,14 @@ import (
 )
 
 type ServicesContainer struct {
-	CasbinService     services.CasbinServiceInterface
-	TokenService      services.TokenServiceInterface
-	TenantService     services.TenantServiceInterface
-	UserService       services.UserServiceInterface
-	RedisService      services.RedisServiceInterface
-	TokenRedisService services.TokenRedisServiceInterface
-	DB                *gorm.DB
+	CasbinService      services.CasbinServiceInterface
+	TokenService       services.TokenServiceInterface
+	TenantService      services.TenantServiceInterface
+	UserService        services.UserServiceInterface
+	RedisService       services.RedisServiceInterface
+	TokenRedisService  services.TokenRedisServiceInterface
+	ApiKeyRedisService services.ApiKeyRedisServiceInterface
+	DB                 *gorm.DB
 }
 
 func NewServicesContainer() (*ServicesContainer, error) {
@@ -53,18 +54,21 @@ func NewServicesContainer() (*ServicesContainer, error) {
 	tokenService := services.NewTokenService(os.Getenv("JWT_SECRET_KEY"), time.Hour*24, time.Hour*24*90)
 
 	tenantsRepo := repositories.NewTenantRepository(gormDB)
-	tenantsService := services.NewTenantService(tenantsRepo)
+	tenantService := services.NewTenantService(tenantsRepo)
+
+	apiKeyRedisService := services.NewApiKeyRedisService(tenantService, redisService, time.Hour*24)
 
 	usersRepo := repositories.NewUserRepository(gormDB)
-	usersService := services.NewUserService(usersRepo)
+	userService := services.NewUserService(usersRepo)
 
 	return &ServicesContainer{
-		CasbinService:     casbinService,
-		TokenService:      tokenService,
-		TenantService:     tenantsService,
-		UserService:       usersService,
-		RedisService:      redisService,
-		TokenRedisService: tokenRedisService,
-		DB:                gormDB,
+		CasbinService:      casbinService,
+		TokenService:       tokenService,
+		TenantService:      tenantService,
+		UserService:        userService,
+		RedisService:       redisService,
+		TokenRedisService:  tokenRedisService,
+		ApiKeyRedisService: apiKeyRedisService,
+		DB:                 gormDB,
 	}, nil
 }

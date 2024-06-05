@@ -11,9 +11,9 @@ import (
 )
 
 type TokenRedisServiceInterface interface {
-	SaveTokenDataRedis(user *models.User, token, refreshToken string, accessDuration time.Duration) error
-	ValidateRefreshToken(refreshToken string) (*models.TokenDataRedis, error)
-	GetTokenDataRedisFromToken(token string) (*models.TokenDataRedis, error)
+	SaveUserRedis(user *models.User, token, refreshToken string, accessDuration time.Duration) error
+	ValidateRefreshToken(refreshToken string) (*models.UserRedis, error)
+	GetUserRedisFromToken(token string) (*models.UserRedis, error)
 }
 
 type TokenRedisService struct {
@@ -26,8 +26,8 @@ func NewTokenRedisService(redisService RedisServiceInterface) *TokenRedisService
 	}
 }
 
-func (s *TokenRedisService) SaveTokenDataRedis(user *models.User, token, refreshToken string, accessDuration time.Duration) error {
-	tokenDataRedis := prepareTokenDataRedis(user, token, refreshToken)
+func (s *TokenRedisService) SaveUserRedis(user *models.User, token, refreshToken string, accessDuration time.Duration) error {
+	tokenDataRedis := prepareUserRedis(user)
 	tokenData, err := json.Marshal(tokenDataRedis)
 	if err != nil {
 		return err
@@ -38,32 +38,32 @@ func (s *TokenRedisService) SaveTokenDataRedis(user *models.User, token, refresh
 	return nil
 }
 
-func (s *TokenRedisService) ValidateRefreshToken(refreshToken string) (*models.TokenDataRedis, error) {
+func (s *TokenRedisService) ValidateRefreshToken(refreshToken string) (*models.UserRedis, error) {
 	result, err := s.RedisService.Get("refresh_token:" + refreshToken)
 	if err != nil {
 		return nil, err
 	}
-	var tokenDataRedis models.TokenDataRedis
+	var tokenDataRedis models.UserRedis
 	if err := json.Unmarshal([]byte(result), &tokenDataRedis); err != nil {
 		return nil, err
 	}
 	return &tokenDataRedis, nil
 }
 
-func (s *TokenRedisService) GetTokenDataRedisFromToken(token string) (*models.TokenDataRedis, error) {
+func (s *TokenRedisService) GetUserRedisFromToken(token string) (*models.UserRedis, error) {
 	result, err := s.RedisService.Get("token:" + token)
 	if err != nil {
 		return nil, err
 	}
-	var tokenDataRedis models.TokenDataRedis
+	var tokenDataRedis models.UserRedis
 	if err := json.Unmarshal([]byte(result), &tokenDataRedis); err != nil {
 		return nil, err
 	}
 	return &tokenDataRedis, nil
 }
 
-// prepareTokenDataRedis prepares user data to be stored in Redis.
-func prepareTokenDataRedis(user *models.User, token, refreshToken string) models.TokenDataRedis {
+// prepareUserRedis prepares user data to be stored in Redis.
+func prepareUserRedis(user *models.User) models.UserRedis {
 	// Map para evitar duplicatas e coletar todas as permissões
 	policiesMap := make(map[string]bool)
 
@@ -87,18 +87,14 @@ func prepareTokenDataRedis(user *models.User, token, refreshToken string) models
 		policiesSlice = append(policiesSlice, policy)
 	}
 
-	return models.TokenDataRedis{
-		Token:        token,
-		RefreshToken: &refreshToken,
-		User: models.UserRedis{
-			ID:       user.ID.String(),
-			TenantID: user.TenantID.String(),
-			Name:     user.Name,
-			Username: user.Username,
-			Email:    user.Email,
-			Roles:    user.ExtractRoles(),
-			Policies: policiesSlice,
-		},
+	return models.UserRedis{
+		ID:       user.ID.String(),
+		TenantID: user.TenantID.String(),
+		Name:     user.Name,
+		Username: user.Username,
+		Email:    user.Email,
+		Roles:    user.ExtractRoles(),
+		Policies: policiesSlice,
 	}
 }
 

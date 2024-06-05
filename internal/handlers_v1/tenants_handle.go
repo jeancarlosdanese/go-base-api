@@ -69,7 +69,7 @@ func (h *TenantsHandler) Create(c *gin.Context) {
 		return
 	}
 
-	tenant, err := h.tenantService.Create(c, &tenantCreate)
+	tenant, err := h.tenantService.CreateTenantWithApiKey(c, &tenantCreate)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Tenant not found"})
 		return

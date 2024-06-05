@@ -23,6 +23,41 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/auth-apikey/tenant-by-apikey": {
+            "get": {
+                "description": "Busca Tenant por X-API-Key",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth-apikey"
+                ],
+                "summary": "Busca Tenant por X-API-Key",
+                "responses": {
+                    "200": {
+                        "description": "Tenant",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.TenantRedis"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid X-API-Key format",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth/login": {
             "post": {
                 "description": "Loga um usuário usando email e senha",
@@ -790,6 +825,9 @@ const docTemplate = `{
                         "type": "integer"
                     }
                 },
+                "api_key": {
+                    "type": "string"
+                },
                 "cell_phone": {
                     "type": "string"
                 },
@@ -845,6 +883,23 @@ const docTemplate = `{
                     "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType"
                 },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.TenantRedis": {
+            "type": "object",
+            "properties": {
+                "cpfcnpj": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 }
             }
@@ -942,7 +997,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "0.0.4",
+	Version:          "0.0.5",
 	Host:             "localhost:5001",
 	BasePath:         "",
 	Schemes:          []string{},
