@@ -51,13 +51,29 @@ func (h *AuthHandler) RegisterRoutes(router *gin.RouterGroup) {
 func (h *AuthHandler) Login(c *gin.Context) {
 	origin := c.GetString("Origin")
 	if origin == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Origem não fornecida"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Origem não fornecida",
+			"hint":  "Certifique-se de que o cliente HTTP está enviando o header Origin ou configure localhost como padrão",
+		})
 		return
 	}
 
 	var loginForm models.LoginForm
 	if err := c.ShouldBind(&loginForm); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Parâmetros de entrada inválidos"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Parâmetros de entrada inválidos",
+			"details": err.Error(),
+			"hint":    "Verifique se os campos 'email' e 'password' estão presentes no form-data",
+		})
+		return
+	}
+
+	// Validar campos obrigatórios
+	if loginForm.Email == "" || loginForm.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Campos obrigatórios não preenchidos",
+			"hint":  "Os campos 'email' e 'password' são obrigatórios",
+		})
 		return
 	}
 

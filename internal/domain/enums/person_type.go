@@ -9,6 +9,7 @@ import (
 )
 
 // PersonType define os tipos possíveis para uma pessoa.
+// @name PersonType
 type PersonType string
 
 const (

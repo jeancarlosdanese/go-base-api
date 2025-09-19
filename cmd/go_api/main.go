@@ -21,12 +21,12 @@ import (
 // @title 							Swagger Go Base API
 // @version 						0.0.7
 // @description 					This is a Go Base API.
-// @termsOfService 					github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
+// @termsOfService 					https://github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
 // @contact.name 					Go Base API Support
-// @contact.url 					github.com/jeancarlosdanese/go-base-api
+// @contact.url 					https://github.com/jeancarlosdanese/go-base-api
 // @license.name 					MIT
-// @license.url 					github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
-// @host 							localhost:5001
+// @license.url 					https://github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
+// @host 							http://localhost:5001
 // @SecurityDefinitions.apiKey 		Bearer
 // @in header
 // @name 							Authorization

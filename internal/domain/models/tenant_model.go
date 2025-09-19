@@ -8,6 +8,7 @@ import (
 )
 
 // Tenant representa os dados para criação de um Tenant.
+// @name Tenant
 type Tenant struct {
 	BaseModel
 	Type           enums.PersonType `gorm:"type:person_type;not null" validate:"required,personType" json:"type"`
@@ -29,6 +30,8 @@ type Tenant struct {
 	Status         enums.StatusType `gorm:"type:status_type;not null;default:'ATIVO'" validate:"required,statusType" json:"status"`
 }
 
+// TenantRedis representa dados simplificados do Tenant para cache Redis
+// @name TenantRedis
 type TenantRedis struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`

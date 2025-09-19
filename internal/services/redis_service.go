@@ -7,8 +7,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/jeancarlosdanese/go-base-api/internal/db"
+	"github.com/redis/go-redis/v9"
 )
 
 type RedisServiceInterface interface {

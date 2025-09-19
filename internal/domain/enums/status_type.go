@@ -9,6 +9,7 @@ import (
 )
 
 // StatusType define os status possíveis para uma entidade.
+// @name StatusType
 type StatusType string
 
 const (

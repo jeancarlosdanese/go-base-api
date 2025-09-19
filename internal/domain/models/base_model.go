@@ -17,6 +17,8 @@ type BaseModel struct {
 	DeletedAt *gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 }
 
+// HTTPError representa um erro HTTP
+// @name HTTPError
 type HTTPError struct {
 	Message string `json:"message"`
 }

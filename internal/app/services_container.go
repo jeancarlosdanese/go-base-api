@@ -27,13 +27,13 @@ type ServicesContainer struct {
 }
 
 func NewServicesContainer() (*ServicesContainer, error) {
-	// Carrega .env ou .env.test com base na variável GO_ENV
+	// Carrega .env ou test.env com base na variável GO_ENV
 	envFile := ".env"
 	if os.Getenv("GO_ENV") == "test" {
-		envFile = ".env.test"
+		envFile = "test.env"
 	}
 	if err := godotenv.Load(envFile); err != nil {
-		log.Printf("Warning: %s file not found", envFile)
+		log.Printf("Warning: %s file not found, using default values", envFile)
 	}
 
 	gormDB, err := db.NewDatabaseConnection()

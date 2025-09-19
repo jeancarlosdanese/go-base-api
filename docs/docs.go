@@ -9,14 +9,14 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE",
+        "termsOfService": "https://github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE",
         "contact": {
             "name": "Go Base API Support",
-            "url": "github.com/jeancarlosdanese/go-base-api"
+            "url": "https://github.com/jeancarlosdanese/go-base-api"
         },
         "license": {
             "name": "MIT",
-            "url": "github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE"
+            "url": "https://github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE"
         },
         "version": "{{.Version}}"
     },
@@ -40,19 +40,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Tenant",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.TenantRedis"
+                            "$ref": "#/definitions/TenantRedis"
                         }
                     },
                     "400": {
                         "description": "Invalid X-API-Key format",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     },
                     "404": {
                         "description": "Tenant not found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     }
                 }
@@ -168,14 +168,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant"
+                                "$ref": "#/definitions/Tenant"
                             }
                         }
                     },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     }
                 }
@@ -199,7 +199,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant"
+                            "$ref": "#/definitions/Tenant"
                         }
                     }
                 ],
@@ -207,19 +207,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Tenant Criado",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant"
+                            "$ref": "#/definitions/Tenant"
                         }
                     },
                     "400": {
                         "description": "Erro de Formato de Solicitação",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     }
                 }
@@ -251,19 +251,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Tenant",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant"
+                            "$ref": "#/definitions/Tenant"
                         }
                     },
                     "400": {
                         "description": "Invalid UUID format",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     },
                     "404": {
                         "description": "Tenant not found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     }
                 }
@@ -294,7 +294,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant"
+                            "$ref": "#/definitions/Tenant"
                         }
                     }
                 ],
@@ -302,19 +302,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Tenant Atualizado",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant"
+                            "$ref": "#/definitions/Tenant"
                         }
                     },
                     "400": {
                         "description": "ID Inválido ou Erro de Formato de Solicitação",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     }
                 }
@@ -344,19 +344,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Mensagem de sucesso",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/H"
                         }
                     },
                     "400": {
                         "description": "ID Inválido",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     }
                 }
@@ -387,7 +387,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant"
+                            "$ref": "#/definitions/Tenant"
                         }
                     }
                 ],
@@ -395,19 +395,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Mensagem de sucesso",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/H"
                         }
                     },
                     "400": {
                         "description": "ID Inválido ou Erro de Formato de Solicitação",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     }
                 }
@@ -432,14 +432,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User"
+                                "$ref": "#/definitions/User"
                             }
                         }
                     },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     }
                 }
@@ -463,7 +463,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.UserCreate"
+                            "$ref": "#/definitions/UserCreate"
                         }
                     }
                 ],
@@ -471,19 +471,19 @@ const docTemplate = `{
                     "201": {
                         "description": "User Criado",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User"
+                            "$ref": "#/definitions/User"
                         }
                     },
                     "400": {
                         "description": "Erro de Formato de Solicitação",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     }
                 }
@@ -515,19 +515,19 @@ const docTemplate = `{
                     "200": {
                         "description": "User",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User"
+                            "$ref": "#/definitions/User"
                         }
                     },
                     "400": {
                         "description": "Invalid UUID format",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     },
                     "404": {
                         "description": "User not found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     }
                 }
@@ -558,7 +558,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User"
+                            "$ref": "#/definitions/User"
                         }
                     }
                 ],
@@ -566,19 +566,19 @@ const docTemplate = `{
                     "200": {
                         "description": "User Atualizado",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User"
+                            "$ref": "#/definitions/User"
                         }
                     },
                     "400": {
                         "description": "ID Inválido ou Erro de Formato de Solicitação",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     }
                 }
@@ -608,19 +608,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Mensagem de sucesso",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/H"
                         }
                     },
                     "400": {
                         "description": "ID Inválido",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     }
                 }
@@ -651,7 +651,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User"
+                            "$ref": "#/definitions/User"
                         }
                     }
                 ],
@@ -659,19 +659,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Mensagem de sucesso",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/H"
                         }
                     },
                     "400": {
                         "description": "ID Inválido ou Erro de Formato de Solicitação",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError"
+                            "$ref": "#/definitions/HTTPError"
                         }
                     }
                 }
@@ -679,33 +679,19 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "gin.H": {
+        "DeletedAt": {
             "type": "object",
-            "additionalProperties": {}
+            "properties": {
+                "time": {
+                    "type": "string"
+                },
+                "valid": {
+                    "description": "Valid is true if Time is not NULL",
+                    "type": "boolean"
+                }
+            }
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType": {
-            "type": "string",
-            "enum": [
-                "FISICA",
-                "JURIDICA"
-            ],
-            "x-enum-varnames": [
-                "Fisica",
-                "Juridica"
-            ]
-        },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_enums.StatusType": {
-            "type": "string",
-            "enum": [
-                "ATIVO",
-                "INATIVO"
-            ],
-            "x-enum-varnames": [
-                "Ativo",
-                "Inativo"
-            ]
-        },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.Endpoint": {
+        "Endpoint": {
             "type": "object",
             "required": [
                 "id",
@@ -721,7 +707,11 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.HTTPError": {
+        "H": {
+            "type": "object",
+            "additionalProperties": {}
+        },
+        "HTTPError": {
             "type": "object",
             "properties": {
                 "message": {
@@ -729,7 +719,18 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyRole": {
+        "PersonType": {
+            "type": "string",
+            "enum": [
+                "FISICA",
+                "JURIDICA"
+            ],
+            "x-enum-varnames": [
+                "Fisica",
+                "Juridica"
+            ]
+        },
+        "PolicyRole": {
             "type": "object",
             "required": [
                 "actions",
@@ -741,7 +742,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "endpoint": {
-                    "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Endpoint"
+                    "$ref": "#/definitions/Endpoint"
                 },
                 "endpoint_id": {
                     "type": "integer"
@@ -750,7 +751,7 @@ const docTemplate = `{
                     "description": "// constraints",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role"
+                            "$ref": "#/definitions/Role"
                         }
                     ]
                 },
@@ -759,7 +760,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyUser": {
+        "PolicyUser": {
             "type": "object",
             "required": [
                 "actions",
@@ -771,7 +772,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "endpoint": {
-                    "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Endpoint"
+                    "$ref": "#/definitions/Endpoint"
                 },
                 "endpoint_id": {
                     "type": "integer"
@@ -780,7 +781,7 @@ const docTemplate = `{
                     "description": "// constraints",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.User"
+                            "$ref": "#/definitions/User"
                         }
                     ]
                 },
@@ -789,7 +790,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role": {
+        "Role": {
             "type": "object",
             "required": [
                 "id",
@@ -806,12 +807,23 @@ const docTemplate = `{
                 "policies": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyRole"
+                        "$ref": "#/definitions/PolicyRole"
                     }
                 }
             }
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant": {
+        "StatusType": {
+            "type": "string",
+            "enum": [
+                "ATIVO",
+                "INATIVO"
+            ],
+            "x-enum-varnames": [
+                "Ativo",
+                "Inativo"
+            ]
+        },
+        "Tenant": {
             "type": "object",
             "required": [
                 "name",
@@ -847,7 +859,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "deleted_at": {
-                    "$ref": "#/definitions/gorm.DeletedAt"
+                    "$ref": "#/definitions/DeletedAt"
                 },
                 "email": {
                     "type": "string"
@@ -874,20 +886,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.StatusType"
+                    "$ref": "#/definitions/StatusType"
                 },
                 "street": {
                     "type": "string"
                 },
                 "type": {
-                    "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_enums.PersonType"
+                    "$ref": "#/definitions/PersonType"
                 },
                 "updated_at": {
                     "type": "string"
                 }
             }
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.TenantRedis": {
+        "TenantRedis": {
             "type": "object",
             "properties": {
                 "cpfcnpj": {
@@ -904,14 +916,14 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.User": {
+        "User": {
             "type": "object",
             "properties": {
                 "created_at": {
                     "type": "string"
                 },
                 "deleted_at": {
-                    "$ref": "#/definitions/gorm.DeletedAt"
+                    "$ref": "#/definitions/DeletedAt"
                 },
                 "email": {
                     "type": "string"
@@ -925,20 +937,20 @@ const docTemplate = `{
                 "policies": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.PolicyUser"
+                        "$ref": "#/definitions/PolicyUser"
                     }
                 },
                 "roles": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Role"
+                        "$ref": "#/definitions/Role"
                     }
                 },
                 "tenant": {
                     "description": "constraints",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/github_com_jeancarlosdanese_go-base-api_internal_domain_models.Tenant"
+                            "$ref": "#/definitions/Tenant"
                         }
                     ]
                 },
@@ -953,7 +965,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jeancarlosdanese_go-base-api_internal_domain_models.UserCreate": {
+        "UserCreate": {
             "type": "object",
             "properties": {
                 "email": {
@@ -972,18 +984,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "gorm.DeletedAt": {
-            "type": "object",
-            "properties": {
-                "time": {
-                    "type": "string"
-                },
-                "valid": {
-                    "description": "Valid is true if Time is not NULL",
-                    "type": "boolean"
-                }
-            }
         }
     },
     "securityDefinitions": {
@@ -997,8 +997,8 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "0.0.5",
-	Host:             "localhost:5001",
+	Version:          "0.0.7",
+	Host:             "http://localhost:5001",
 	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "Swagger Go Base API",

@@ -15,4 +15,7 @@ CREATE TABLE "public"."users" (
 );
 -- Indices
 CREATE UNIQUE INDEX uni_users_tenant_id_email ON public.users USING btree (tenant_id, email);
+CREATE UNIQUE INDEX uni_users_tenant_id_username ON public.users USING btree (tenant_id, username);
+CREATE INDEX idx_users_tenant_id ON public.users USING btree (tenant_id);
 CREATE INDEX idx_users_deleted_at ON public.users USING btree (deleted_at);
+CREATE INDEX idx_users_email ON public.users USING btree (email);

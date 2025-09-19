@@ -1,0 +1,270 @@
+type: collection.insomnia.rest/5.0
+name: "Swagger Go Base API"
+meta:
+  id: wrk_8354f20c4090420684bd7ff411ab4a57
+  created: 1758235337828
+  modified: 1758236519000
+  description: "This is a Go Base API. - Multi-tenant com autenticação JWT (v0.0.7)"
+collection:
+  - url: "{{ base_url }}/health"
+    name: 🏥 Health Check
+    meta:
+      id: req_5081add2a8c2470abc5ed5465e6d67ac
+      created: 1758235337836
+      modified: 1758235337836
+      isPrivate: false
+      description: ""
+      sortKey: -1758235337836
+    method: GET
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ base_url }}/swagger/"
+    name: 📚 Documentação Swagger
+    meta:
+      id: req_7c9b47d66e294dd89d9db444297ed2a9
+      created: 1758235337836
+      modified: 1758235337836
+      isPrivate: false
+      description: ""
+      sortKey: -1758235337836
+    method: GET
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ base_url }}/metrics"
+    name: 📊 Métricas
+    meta:
+      id: req_b2b54f3ee5da4627b2ace783ae718456
+      created: 1758235337836
+      modified: 1758235337836
+      isPrivate: false
+      description: ""
+      sortKey: -1758235337836
+    method: GET
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - name: 🔐 Autenticação
+    meta:
+      id: fld_1a13be8cfd484b6abac68adff7eabf62
+      created: 1758235337837
+      modified: 1758235337837
+      sortKey: -1758235337837
+      description: ""
+    children:
+      - url: "{{ base_url }}/api/v1/auth/login"
+        name: 🔐 Login - Obter Token JWT
+        meta:
+          id: req_fecbadceb63348f0b836795ac259f662
+          created: 1758235337831
+          modified: 1758235337831
+          isPrivate: false
+          description: Faça login com email e senha para obter token de acesso JWT
+          sortKey: -1758235337831
+        method: POST
+        body:
+          mimeType: application/x-www-form-urlencoded
+          params:
+            - name: email
+              value: "{{ master_email }}"
+            - name: password
+              value: "{{ master_password }}"
+        headers:
+          - name: Content-Type
+            value: application/x-www-form-urlencoded
+          - name: Origin
+            value: "{{ origin }}"
+          - name: User-Agent
+            value: "{{ user_agent }}"
+          - name: Accept
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/api/v1/auth/refresh"
+        name: Refresh Token
+        meta:
+          id: req_04eac6dd00de4a3fb64c83b170413a06
+          created: 1758235337833
+          modified: 1758235337833
+          isPrivate: false
+          description: ""
+          sortKey: -1758235337833
+        method: POST
+        body:
+          mimeType: application/x-www-form-urlencoded
+          params:
+            - name: refreshToken
+              value: "{{ refresh_token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/api/v1/auth-apikey/tenant-by-apikey"
+        name: Buscar Tenant por API Key
+        meta:
+          id: req_23b5b9e200f044d19a8302f56ff0d844
+          created: 1758235337834
+          modified: 1758235337834
+          isPrivate: false
+          description: ""
+          sortKey: -1758235337834
+        method: GET
+        headers:
+          - name: X-API-Key
+            value: "{{ api_key }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: 👥 Usuários
+    meta:
+      id: fld_e586cf902f7644f4bcd98205d84fb897
+      created: 1758235337837
+      modified: 1758235337837
+      sortKey: -1758235337837
+      description: ""
+    children:
+      - url: "{{ base_url }}/api/v1/users"
+        name: ➕ Criar Usuário
+        meta:
+          id: req_0ac4a5152f6543c4a30808dff67b6e85
+          created: 1758235337835
+          modified: 1758235337835
+          isPrivate: false
+          description: Criar um novo usuário no sistema (requer autenticação JWT)
+          sortKey: -1758235337835
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "João Silva",
+              "email": "joao.silva@empresa.com",
+              "username": "joao.silva",
+              "password": "senhaSegura123",
+              "tenant_id": "uuid-do-tenant-aqui"
+            }
+        headers:
+          - name: Authorization
+            value: Bearer {{ auth_token }}
+          - name: Content-Type
+            value: application/json
+          - name: Origin
+            value: "{{ origin }}"
+          - name: User-Agent
+            value: "{{ user_agent }}"
+          - name: Accept
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: 🏢 Tenants
+    meta:
+      id: fld_2a157e26b4ee42b5a32947a81e9c44ea
+      created: 1758235337837
+      modified: 1758235337837
+      sortKey: -1758235337837
+      description: ""
+    children:
+      - url: "{{ base_url }}/api/v1/tenants"
+        name: 🏢 Criar Tenant
+        meta:
+          id: req_c84cb78802f04b92a96e9114f93755ed
+          created: 1758235337836
+          modified: 1758235337836
+          isPrivate: false
+          description: Criar um novo tenant/empresa no sistema (requer autenticação JWT)
+          sortKey: -1758235337836
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "Empresa Exemplo Ltda",
+              "email": "contato@empresa.com",
+              "cpf_cnpj": "12345678000123",
+              "type": "JURIDICA",
+              "status": "ATIVO",
+              "phone": "11999999999",
+              "cell_phone": "11988888888",
+              "street": "Rua das Flores",
+              "number": "123",
+              "complement": "Sala 456",
+              "neighborhood": "Centro",
+              "city": "São Paulo",
+              "state": "SP",
+              "cep": "01234567"
+            }
+        headers:
+          - name: Authorization
+            value: Bearer {{ auth_token }}
+          - name: Content-Type
+            value: application/json
+          - name: Origin
+            value: "{{ origin }}"
+          - name: User-Agent
+            value: "{{ user_agent }}"
+          - name: Accept
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_182cf93b4db5bfb942791411c7d316e1ef60003c
+    created: 1758235337838
+    modified: 1758235337838
+environments:
+  name: Base Environment
+  meta:
+    id: env_182cf93b4db5bfb942791411c7d316e1ef60003c
+    created: 1758235337838
+    modified: 1758235431430
+    isPrivate: false
+  data:
+    base_url: http://localhost:5001
+    api_key: VER_NO_DB
+    origin: localhost
+    auth_token: TOKEN_JWT
+    refresh_token: REFRESH_TOKEN

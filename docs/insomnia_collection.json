@@ -1,0 +1,417 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-09-18T18:30:00.000Z",
+  "__export_source": "go-base-api",
+  "resources": [
+    {
+      "_id": "wrk_go_base_api",
+      "_type": "workspace",
+      "name": "Go Base API",
+      "description": "API desenvolvida em Go com Clean Architecture - Multi-tenant com autenticação JWT",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_local",
+      "_type": "environment",
+      "name": "Local Development",
+      "data": {
+        "base_url": "http://localhost:5001",
+        "api_key": "VERIFICAR NO DB",
+        "auth_token": "TOKEN JWT",
+        "refresh_token": "REFRESH TOKEN",
+        "master_email": "master@domain.local",
+        "master_password": "master123",
+        "origin": "localhost",
+        "user_agent": "Insomnia/2023.5.0"
+      }
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:5001",
+        "api_key": "VERIFICAR NO DB",
+        "origin": "localhost",
+        "auth_token": "TOKEN JWT",
+        "refresh_token": "REFRESH TOKEN"
+      }
+    },
+    {
+      "_id": "env_development",
+      "_type": "environment",
+      "name": "Development Server",
+      "data": {
+        "base_url": "http://dev-api.company.com",
+        "api_key": "",
+        "auth_token": "",
+        "refresh_token": "",
+        "master_email": "master@domain.local",
+        "master_password": "",
+        "origin": "https://dev.company.com",
+      }
+    },
+    {
+      "_id": "env_production",
+      "_type": "environment",
+      "name": "Production",
+      "data": {
+        "base_url": "https://api.company.com",
+        "api_key": "",
+        "auth_token": "",
+        "refresh_token": "",
+        "master_email": "",
+        "master_password": "",
+        "origin": "https://app.company.com",
+      }
+    },
+    {
+      "_id": "req_auth_login",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "🔐 Login - Obter Token JWT",
+      "description": "Faça login com email e senha para obter token de acesso JWT",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/auth/login",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/x-www-form-urlencoded"
+        },
+        {
+          "name": "Origin",
+          "value": "{{ origin }}"
+        },
+        {
+          "name": "User-Agent",
+          "value": "{{ user_agent }}"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/x-www-form-urlencoded",
+        "params": [
+          {
+            "name": "email",
+            "value": "{{ master_email }}"
+          },
+          {
+            "name": "password",
+            "value": "{{ master_password }}"
+          }
+        ]
+      }
+    },
+    {
+      "_id": "req_auth_refresh",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Refresh Token",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/auth/refresh",
+      "body": {
+        "mimeType": "application/x-www-form-urlencoded",
+        "params": [
+          {
+            "name": "refreshToken",
+            "value": "{{ refresh_token }}"
+          }
+        ]
+      }
+    },
+    {
+      "_id": "req_auth_apikey_tenant",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Buscar Tenant por API Key",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/auth-apikey/tenant-by-apikey",
+      "headers": [
+        {
+          "name": "X-API-Key",
+          "value": "{{ api_key }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_users_list",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Listar Usuários",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/users",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_users_get",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Buscar Usuário por ID",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/users/{id}",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "value": "uuid-do-usuario"
+        }
+      ]
+    },
+    {
+      "_id": "req_users_create",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "➕ Criar Usuário",
+      "description": "Criar um novo usuário no sistema (requer autenticação JWT)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/users",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Origin",
+          "value": "{{ origin }}"
+        },
+        {
+          "name": "User-Agent",
+          "value": "{{ user_agent }}"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao.silva@empresa.com\",\n  \"username\": \"joao.silva\",\n  \"password\": \"senhaSegura123\",\n  \"tenant_id\": \"uuid-do-tenant-aqui\"\n}"
+      }
+    },
+    {
+      "_id": "req_users_update",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Atualizar Usuário",
+      "method": "PUT",
+      "url": "{{ base_url }}/api/v1/users/{id}",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "value": "uuid-do-usuario"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"João Silva Atualizado\",\n  \"email\": \"joao.atualizado@example.com\",\n  \"username\": \"joao.silva\"\n}"
+      }
+    },
+    {
+      "_id": "req_users_delete",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Excluir Usuário",
+      "method": "DELETE",
+      "url": "{{ base_url }}/api/v1/users/{id}",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "value": "uuid-do-usuario"
+        }
+      ]
+    },
+    {
+      "_id": "req_tenants_list",
+      "_type": "request",
+      "parentId": "fld_tenants",
+      "name": "Listar Tenants",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/tenants",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_tenants_get",
+      "_type": "request",
+      "parentId": "fld_tenants",
+      "name": "Buscar Tenant por ID",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/tenants/{id}",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "value": "uuid-do-tenant"
+        }
+      ]
+    },
+    {
+      "_id": "req_tenants_create",
+      "_type": "request",
+      "parentId": "fld_tenants",
+      "name": "🏢 Criar Tenant",
+      "description": "Criar um novo tenant/empresa no sistema (requer autenticação JWT)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/tenants",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Origin",
+          "value": "{{ origin }}"
+        },
+        {
+          "name": "User-Agent",
+          "value": "{{ user_agent }}"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Empresa Exemplo Ltda\",\n  \"email\": \"contato@empresa.com\",\n  \"cpf_cnpj\": \"12345678000123\",\n  \"type\": \"JURIDICA\",\n  \"status\": \"ATIVO\",\n  \"phone\": \"11999999999\",\n  \"cell_phone\": \"11988888888\",\n  \"street\": \"Rua das Flores\",\n  \"number\": \"123\",\n  \"complement\": \"Sala 456\",\n  \"neighborhood\": \"Centro\",\n  \"city\": \"São Paulo\",\n  \"state\": \"SP\",\n  \"cep\": \"01234567\"\n}"
+      }
+    },
+    {
+      "_id": "req_tenants_update",
+      "_type": "request",
+      "parentId": "fld_tenants",
+      "name": "Atualizar Tenant",
+      "method": "PUT",
+      "url": "{{ base_url }}/api/v1/tenants/{id}",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "value": "uuid-do-tenant"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Empresa Atualizada Ltda\",\n  \"email\": \"contato@empresa.com\",\n  \"phone\": \"11999999999\"\n}"
+      }
+    },
+    {
+      "_id": "req_tenants_delete",
+      "_type": "request",
+      "parentId": "fld_tenants",
+      "name": "Excluir Tenant",
+      "method": "DELETE",
+      "url": "{{ base_url }}/api/v1/tenants/{id}",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ auth_token }}"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "value": "uuid-do-tenant"
+        }
+      ]
+    },
+    {
+      "_id": "req_health",
+      "_type": "request",
+      "parentId": "wrk_go_base_api",
+      "name": "🏥 Health Check",
+      "method": "GET",
+      "url": "{{ base_url }}/health"
+    },
+    {
+      "_id": "req_metrics",
+      "_type": "request",
+      "parentId": "wrk_go_base_api",
+      "name": "📊 Métricas",
+      "method": "GET",
+      "url": "{{ base_url }}/metrics"
+    },
+    {
+      "_id": "req_swagger",
+      "_type": "request",
+      "parentId": "wrk_go_base_api",
+      "name": "📚 Documentação Swagger",
+      "method": "GET",
+      "url": "{{ base_url }}/swagger/"
+    },
+    {
+      "_id": "fld_auth",
+      "_type": "request_group",
+      "parentId": "wrk_go_base_api",
+      "name": "🔐 Autenticação"
+    },
+    {
+      "_id": "fld_users",
+      "_type": "request_group",
+      "parentId": "wrk_go_base_api",
+      "name": "👥 Usuários"
+    },
+    {
+      "_id": "fld_tenants",
+      "_type": "request_group",
+      "parentId": "wrk_go_base_api",
+      "name": "🏢 Tenants"
+    }
+  ]
+}

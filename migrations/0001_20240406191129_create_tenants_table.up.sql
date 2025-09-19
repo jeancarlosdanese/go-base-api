@@ -28,17 +28,25 @@ CREATE TABLE "public"."tenants" (
     PRIMARY KEY ("id")
 );
 -- Indices
-CREATE UNIQUE INDEX uni_tenants_cpf_cnpj ON public.tenants USING btree (cpf_cnpj);
-CREATE UNIQUE INDEX uni_tenants_allowed_origins ON public.tenants USING btree (allowed_origins);
+CREATE UNIQUE INDEX uni_tenants_cpf_cnpj ON public.tenants USING btree (cpf_cnpj) WHERE cpf_cnpj IS NOT NULL;
+CREATE UNIQUE INDEX uni_tenants_email ON public.tenants USING btree (email) WHERE email IS NOT NULL;
+CREATE UNIQUE INDEX uni_tenants_api_key ON public.tenants USING btree (api_key) WHERE api_key IS NOT NULL;
 CREATE INDEX idx_tenants_deleted_at ON public.tenants USING btree (deleted_at);
+CREATE INDEX idx_tenants_status ON public.tenants USING btree (status);
 -- Inserir dados do "master" Tenant na tabela "tenants"
 INSERT INTO "public"."tenants" (
         "type",
         "name",
-        "allowed_origins"
+        "email",
+        "api_key",
+        "allowed_origins",
+        "status"
     )
 VALUES (
         'JURIDICA',
         'Master Tenant',
-        '["localhost"]'
+        'master@domain.local',
+        gen_random_uuid()::text,
+        '["localhost"]'::jsonb,
+        'ATIVO'
     );

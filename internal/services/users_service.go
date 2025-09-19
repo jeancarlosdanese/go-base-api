@@ -64,13 +64,13 @@ func (s *UserService) CreateUserWithPassword(c *gin.Context, userCreate *models.
 func (s *UserService) Authenticate(c *gin.Context, email, password, origin string) (*models.User, error) {
 	user, err := s.Repo.FindByEmail(c, email, origin)
 	if err != nil {
-		logging.InfoLogger.Printf("Erro ao buscar usuário por email e origem: %v", err)
+		logging.InfoLogger.Printf("Falha na autenticação do usuário")
 		return nil, err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		logging.InfoLogger.Printf("Senha inválida para o usuário: %s", email)
+		logging.InfoLogger.Printf("Tentativa de login com credenciais inválidas")
 		return nil, errors.New("senha inválida")
 	}
 
@@ -82,7 +82,7 @@ func (s *UserService) GetOnlyByID(c *gin.Context, id uuid.UUID) (*models.User, e
 	user, err := s.Repo.GetOnlyByID(c, id)
 	if err != nil {
 		log.Println(err)
-		logging.InfoLogger.Printf("Usuário não encontrado pelo ID: %v", id)
+		logging.InfoLogger.Printf("Usuário não encontrado pelo ID fornecido")
 		return nil, errors.New("not found user by id")
 	}
 

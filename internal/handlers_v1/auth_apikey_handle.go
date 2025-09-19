@@ -36,14 +36,26 @@ func (h *AuthApiKeyHandler) RegisterRoutes(router *gin.RouterGroup) {
 func (h *AuthApiKeyHandler) GetTenantByApiKey(c *gin.Context) {
 	origin := c.GetString("Origin")
 	if origin == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Origem não fornecida"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Origem não fornecida",
+			"hint":  "Certifique-se de que o cliente HTTP está enviando o header Origin ou configure localhost como padrão",
+		})
 		return
 	}
 
 	tenant, ok := utils.GetTenantFromContext(c, string(contextkeys.TenantDataKey))
 	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error":  "Tenant não encontrado",
+			"hint":   "Verifique se a API Key é válida e está associada a um tenant",
+			"origin": origin,
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"origin": origin, "tenant": tenant})
+	c.JSON(http.StatusOK, gin.H{
+		"origin": origin,
+		"tenant": tenant,
+		"status": "success",
+	})
 }

@@ -9,6 +9,7 @@ import (
 )
 
 // User representa um usuário no sistema.
+// @name User
 type User struct {
 	BaseModel
 	TenantID        uuid.UUID     `gorm:"type:uuid;not null;uniqueIndex:uni_users_tenant_id_email" json:"-"`
@@ -25,6 +26,7 @@ type User struct {
 }
 
 // UserCreate é usado para receber dados do formulário de criação de usuário.
+// @name UserCreate
 type UserCreate struct {
 	TenantID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:uni_users_tenant_id_email" json:"tenant_id"`
 	Username string    `gorm:"type:varchar(80);not null" json:"username"`

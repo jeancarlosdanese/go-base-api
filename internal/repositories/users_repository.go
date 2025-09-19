@@ -35,10 +35,10 @@ func (r *GormAuthRepository[Entity]) FindByEmail(c *gin.Context, email, origin s
 		Take(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logging.InfoLogger.Printf("Usuário ou origem não encontrado: %s, %s", email, origin)
+			logging.InfoLogger.Printf("Usuário ou origem não encontrado para origem: %s", origin)
 			return nil, errors.New("usuário ou origem não encontrado")
 		}
-		logging.ErrorLogger.Printf("Erro ao buscar usuário por email e origem: %v", err)
+		logging.ErrorLogger.Printf("Erro interno na busca de usuário")
 		return nil, err
 	}
 
