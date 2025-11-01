@@ -25,7 +25,7 @@ func SetupRouter() *gin.Engine {
 	os.Setenv("GO_ENV", "test")
 
 	// Carregar arquivo de configuração de teste
-	if err := os.Setenv("ENV_FILE", "test.env"); err != nil {
+	if err := os.Setenv("ENV_FILE", ".env.test"); err != nil {
 		log.Printf("Warning: Could not set ENV_FILE: %v", err)
 	}
 

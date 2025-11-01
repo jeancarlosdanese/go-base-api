@@ -1,13 +1,13 @@
-// internal/services/redis_service.go
+// @file: internal/services/redis_service.go
 
 package services
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/jeancarlosdanese/go-base-api/internal/db"
+	"github.com/jeancarlosdanese/go-base-api/internal/logging"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -27,19 +27,26 @@ func NewRedisService() *RedisService {
 }
 
 func (r *RedisService) Set(key string, value interface{}, expiration time.Duration) error {
-	// log.Printf("INFO: Setting key in Redis: %s", key)
 	err := r.Client.Set(context.Background(), key, value, expiration).Err()
 	if err != nil {
-		log.Printf("ERROR: Error setting key in Redis: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("key", key).
+			Dur("expiration", expiration).
+			Str("operation", "redis_set").
+			Msg("Erro ao definir chave no Redis")
 	}
 	return err
 }
 
 func (r *RedisService) Get(key string) (string, error) {
-	// log.Printf("INFO: Getting key from Redis: %s", key)
 	result, err := r.Client.Get(context.Background(), key).Result()
-	if err != nil {
-		log.Printf("ERROR: Error getting key from Redis: %v", err)
+	if err != nil && err != redis.Nil {
+		logging.Logger.Error().
+			Err(err).
+			Str("key", key).
+			Str("operation", "redis_get").
+			Msg("Erro ao obter chave do Redis")
 	}
 	return result, err
 }

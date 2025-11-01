@@ -10,7 +10,12 @@ import (
 )
 
 func HandleAuthenticationError(c *gin.Context, err error) {
-	logging.ErrorLogger.Printf("Erro ao autenticar usuário: %v", err)
+	logging.Logger.Error().
+		Err(err).
+		Str("operation", "authenticate").
+		Str("client_ip", c.ClientIP()).
+		Msg("Erro ao autenticar usuário")
+
 	var httpStatus int
 	var errorMsg string
 

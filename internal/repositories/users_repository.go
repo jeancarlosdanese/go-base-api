@@ -35,10 +35,19 @@ func (r *GormAuthRepository[Entity]) FindByEmail(c *gin.Context, email, origin s
 		Take(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logging.InfoLogger.Printf("Usuário ou origem não encontrado para origem: %s", origin)
+			logging.Logger.Info().
+				Str("email", email).
+				Str("origin", origin).
+				Str("operation", "find_by_email").
+				Msg("Usuário ou origem não encontrado")
 			return nil, errors.New("usuário ou origem não encontrado")
 		}
-		logging.ErrorLogger.Printf("Erro interno na busca de usuário")
+		logging.Logger.Error().
+			Err(err).
+			Str("email", email).
+			Str("origin", origin).
+			Str("operation", "find_by_email").
+			Msg("Erro interno na busca de usuário")
 		return nil, err
 	}
 
@@ -48,7 +57,11 @@ func (r *GormAuthRepository[Entity]) FindByEmail(c *gin.Context, email, origin s
 			Preload("Endpoint").
 			Where("user_id = ?", user.ID).
 			Find(&user.SpecialPolicies).Error; err != nil {
-			logging.ErrorLogger.Printf("Erro ao carregar special policies para o usuário: %v", err)
+			logging.Logger.Error().
+				Err(err).
+				Str("user_id", user.ID.String()).
+				Str("operation", "load_special_policies").
+				Msg("Erro ao carregar special policies para o usuário")
 			return nil, err
 		}
 	}

@@ -16,6 +16,7 @@ import (
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"gorm.io/gorm"
@@ -24,11 +25,19 @@ import (
 	contextkeys "github.com/jeancarlosdanese/go-base-api/internal/domain/context_keys"
 	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
 	handlers_v1 "github.com/jeancarlosdanese/go-base-api/internal/handlers_v1"
+	"github.com/jeancarlosdanese/go-base-api/internal/logging"
+	"github.com/jeancarlosdanese/go-base-api/internal/metrics"
+	"github.com/jeancarlosdanese/go-base-api/internal/middleware"
 	"github.com/jeancarlosdanese/go-base-api/internal/services"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // SetupRouter agora aceita ServicesContainer como argumento.
 func SetupRouter(r *gin.Engine, sc *app.ServicesContainer) {
+	// Middleware de logging HTTP (deve ser um dos primeiros)
+	r.Use(middleware.GinLoggerMiddleware())
+	r.Use(middleware.GinRecoveryMiddleware())
+
 	// Middleware global de segurança
 	r.Use(SecurityHeadersMiddleware())
 
@@ -38,11 +47,16 @@ func SetupRouter(r *gin.Engine, sc *app.ServicesContainer) {
 	// Compressão gzip para respostas
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 
-	// Middleware de métricas
-	r.Use(MetricsMiddleware())
+	// Middleware de métricas Prometheus
+	r.Use(metrics.Middleware())
 
-	// Rate limiting simples - 50 requests por minuto por IP
-	r.Use(RateLimitMiddleware(50, time.Minute))
+	// Rate limiting com Redis - 50 requests por minuto por IP
+	if sc.RedisClient != nil {
+		r.Use(middleware.RateLimitRedisMiddleware(sc.RedisClient, 50, time.Minute))
+	} else {
+		// Fallback para rate limiting em memória se Redis não estiver disponível
+		r.Use(RateLimitMiddleware(50, time.Minute))
+	}
 
 	// Servir arquivos estáticos (favicon, etc.)
 	r.Static("/static", "./static")
@@ -54,10 +68,10 @@ func SetupRouter(r *gin.Engine, sc *app.ServicesContainer) {
 	r.Static("/docs", "./docs")
 
 	// Health check endpoint (não limitado por rate limiting)
-	r.GET("/health", HealthCheckHandler(sc.DB))
+	r.GET("/health", healthCheckHandlerWrapper(sc.DB, sc.RedisClient))
 
-	// Metrics endpoint
-	r.GET("/metrics", MetricsHandler)
+	// Metrics endpoint - expõe métricas Prometheus
+	r.GET("/metrics", metricsHandlerWrapper())
 
 	// Setup da rota do Swagger com redirecionamento automático
 	swaggerHandler := ginSwagger.WrapHandler(swaggerFiles.Handler)
@@ -221,7 +235,10 @@ func AuthMiddleware(tokenService services.TokenServiceInterface, tokenRedisServi
 		// Calcular a diferença
 		duration := end.Sub(start)
 
-		fmt.Printf("O processo demorou %v\n", duration)
+		logging.Logger.Debug().
+			Dur("duration", duration).
+			Str("operation", "auth_middleware").
+			Msg("Tempo de processamento do middleware de autenticação")
 	}
 }
 
@@ -336,15 +353,40 @@ func SecurityHeadersMiddleware() gin.HandlerFunc {
 	}
 }
 
+// healthCheckHandlerWrapper é um wrapper documentado para o HealthCheckHandler
+// @Summary Health check da aplicação
+// @Description Verifica o status de saúde da aplicação e suas dependências (PostgreSQL e Redis)
+// @Tags System
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} map[string]interface{} "Sistema saudável - status: ok"
+// @Success 503 {object} map[string]interface{} "Sistema degradado - status: degraded (algum serviço indisponível)"
+// @Router /health [get]
+func healthCheckHandlerWrapper(db *gorm.DB, redisClient *redis.Client) gin.HandlerFunc {
+	return HealthCheckHandler(db, redisClient)
+}
+
+// metricsHandlerWrapper é um wrapper documentado para o handler de métricas Prometheus
+// @Summary Métricas Prometheus
+// @Description Expõe métricas da aplicação no formato Prometheus para scraping
+// @Tags System
+// @Accept  json
+// @Produce text/plain
+// @Success 200 {string} string "Métricas Prometheus em formato texto"
+// @Router /metrics [get]
+func metricsHandlerWrapper() gin.HandlerFunc {
+	return gin.WrapH(promhttp.Handler())
+}
+
 // HealthCheckHandler verifica o status de saúde da aplicação e suas dependências
-func HealthCheckHandler(db *gorm.DB) gin.HandlerFunc {
+func HealthCheckHandler(db *gorm.DB, redisClient *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		health := gin.H{
 			"status":    "ok",
 			"timestamp": time.Now().UTC().Format(time.RFC3339),
 			"services": gin.H{
 				"database": checkDatabaseHealth(db),
-				"redis":    checkRedisHealth(),
+				"redis":    checkRedisHealth(redisClient),
 			},
 		}
 
@@ -413,12 +455,44 @@ func checkDatabaseHealth(db *gorm.DB) gin.H {
 }
 
 // checkRedisHealth verifica a saúde do Redis
-func checkRedisHealth() gin.H {
-	// Para uma implementação completa, seria necessário injetar o cliente Redis
-	// Por enquanto, retornamos um status básico
+func checkRedisHealth(redisClient *redis.Client) gin.H {
+	if redisClient == nil {
+		return gin.H{
+			"status": "error",
+			"error":  "Redis client is nil",
+		}
+	}
+
+	// Testa ping no Redis com timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	start := time.Now()
+	pong, err := redisClient.Ping(ctx).Result()
+	duration := time.Since(start)
+
+	if err != nil {
+		return gin.H{
+			"status":   "error",
+			"error":    err.Error(),
+			"duration": duration.String(),
+		}
+	}
+
+	// Obtém informações do pool de conexões
+	poolStats := redisClient.PoolStats()
+
 	return gin.H{
-		"status": "ok",
-		"note":   "Redis health check requires Redis client injection",
+		"status":   "ok",
+		"message":  pong,
+		"duration": duration.String(),
+		"pool_stats": gin.H{
+			"hits":        poolStats.Hits,
+			"misses":      poolStats.Misses,
+			"timeouts":    poolStats.Timeouts,
+			"total_conns": poolStats.TotalConns,
+			"idle_conns":  poolStats.IdleConns,
+		},
 	}
 }
 
@@ -426,23 +500,6 @@ func checkRedisHealth() gin.H {
 var (
 	rateLimitStore = make(map[string][]time.Time)
 	rateLimitMutex sync.RWMutex
-)
-
-// Métricas básicas
-var (
-	metricsData = struct {
-		requestsTotal    int64
-		requestsByPath   map[string]int64
-		requestsByMethod map[string]int64
-		requestsByStatus map[int]int64
-		responseTime     []time.Duration
-		mutex            sync.RWMutex
-	}{
-		requestsByPath:   make(map[string]int64),
-		requestsByMethod: make(map[string]int64),
-		requestsByStatus: make(map[int]int64),
-		responseTime:     make([]time.Duration, 0),
-	}
 )
 
 // RateLimitMiddleware implementa controle de taxa de requisições por IP
@@ -525,92 +582,6 @@ func getClientIP(c *gin.Context) string {
 		return c.Request.RemoteAddr
 	}
 	return ip
-}
-
-// MetricsMiddleware coleta métricas básicas das requisições
-func MetricsMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		start := time.Now()
-
-		c.Next()
-
-		// Coleta métricas após a requisição
-		duration := time.Since(start)
-		statusCode := c.Writer.Status()
-		path := c.Request.URL.Path
-		method := c.Request.Method
-
-		metricsData.mutex.Lock()
-		metricsData.requestsTotal++
-		metricsData.requestsByPath[path]++
-		metricsData.requestsByMethod[method]++
-		metricsData.requestsByStatus[statusCode]++
-
-		// Mantém apenas as últimas 1000 medições de tempo de resposta
-		metricsData.responseTime = append(metricsData.responseTime, duration)
-		if len(metricsData.responseTime) > 1000 {
-			metricsData.responseTime = metricsData.responseTime[1:]
-		}
-		metricsData.mutex.Unlock()
-	}
-}
-
-// MetricsHandler retorna métricas em formato JSON
-func MetricsHandler(c *gin.Context) {
-	metricsData.mutex.RLock()
-	defer metricsData.mutex.RUnlock()
-
-	// Calcula tempo de resposta médio
-	var avgResponseTime time.Duration
-	if len(metricsData.responseTime) > 0 {
-		var total time.Duration
-		for _, duration := range metricsData.responseTime {
-			total += duration
-		}
-		avgResponseTime = total / time.Duration(len(metricsData.responseTime))
-	}
-
-	// Calcula distribuição de status codes
-	statusDistribution := make(map[string]int64)
-	for status, count := range metricsData.requestsByStatus {
-		var category string
-		switch {
-		case status >= 200 && status < 300:
-			category = "2xx"
-		case status >= 300 && status < 400:
-			category = "3xx"
-		case status >= 400 && status < 500:
-			category = "4xx"
-		case status >= 500:
-			category = "5xx"
-		default:
-			category = "other"
-		}
-		statusDistribution[category] += count
-	}
-
-	metrics := gin.H{
-		"timestamp": time.Now().UTC().Format(time.RFC3339),
-		"uptime":    "N/A", // Seria necessário armazenar o tempo de inicialização
-		"requests": gin.H{
-			"total":               metricsData.requestsTotal,
-			"by_method":           metricsData.requestsByMethod,
-			"by_path":             metricsData.requestsByPath,
-			"by_status":           metricsData.requestsByStatus,
-			"status_distribution": statusDistribution,
-		},
-		"performance": gin.H{
-			"avg_response_time":    avgResponseTime.String(),
-			"avg_response_time_ms": avgResponseTime.Milliseconds(),
-			"samples_count":        len(metricsData.responseTime),
-		},
-		"system": gin.H{
-			"goroutines": "N/A", // Seria necessário usar runtime.NumGoroutine()
-			"memory":     "N/A", // Seria necessário usar runtime.MemStats
-		},
-	}
-
-	c.JSON(http.StatusOK, metrics)
 }
 
 // RequestSizeLimitMiddleware limita o tamanho do corpo da requisição

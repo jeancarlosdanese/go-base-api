@@ -39,14 +39,16 @@ func (h *AuthHandler) RegisterRoutes(router *gin.RouterGroup) {
 
 // login realiza o login do usuário e retorna um JWT.
 // @Summary Loga um usuário
-// @Description Loga um usuário usando email e senha
+// @Description Loga um usuário usando email e senha. Retorna access token e refresh token
 // @Tags Auth
 // @Accept x-www-form-urlencoded
 // @Produce json
 // @Param email formData string true "Email do Usuário"
 // @Param password formData string true "Senha do Usuário"
-// @Success 200 {object} map[string]interface{} "Token gerado com sucesso"
-// @Failure 400 {object} map[string]string "Erro de autenticação"
+// @Param Origin header string false "Origem da requisição (ex: localhost, example.com)"
+// @Success 200 {object} models.Token "Token gerado com sucesso"
+// @Failure 400 {object} map[string]string "Erro de autenticação - parâmetros inválidos ou origem não fornecida"
+// @Failure 401 {object} map[string]string "Credenciais inválidas"
 // @Router /api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	origin := c.GetString("Origin")
@@ -88,15 +90,15 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 // Refresh renova o token usando o refreshToken.
 // @Summary Renova o token
-// @Description Renova o token usando o refreshToken
+// @Description Renova o access token usando o refresh token. Retorna novos access token e refresh token
 // @Tags Auth
 // @Accept x-www-form-urlencoded
 // @Produce json
-// @Param refreshToken formData string true "Refresh Token"
-// @Success 200 {object} map[string]interface{} "Token renovado com sucesso"
-// @Failure 400 {object} map[string]string "Erro de autenticação"
+// @Param refreshToken formData string true "Refresh Token válido"
+// @Success 200 {object} models.Token "Token renovado com sucesso"
+// @Failure 400 {object} map[string]string "Parâmetros inválidos"
+// @Failure 401 {object} map[string]string "Token inválido ou expirado"
 // @Router /api/v1/auth/refresh [post]
-// Refresh renova o token usando o refreshToken.
 func (h *AuthHandler) Refresh(c *gin.Context) {
 	var refreshTokenRequest models.RefreshTokenRequest
 	if err := c.ShouldBind(&refreshTokenRequest); err != nil {
@@ -106,14 +108,21 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 
 	userID, err := h.tokenService.RefreshTokens(refreshTokenRequest.RefreshToken)
 	if err != nil {
-		logging.WarnLogger.Printf("Erro ao renovar token: %v", err)
+		logging.Logger.Warn().
+			Err(err).
+			Str("operation", "refresh_token").
+			Msg("Erro ao renovar token")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token inválido ou expirado"})
 		return
 	}
 
 	user, err := h.userService.GetOnlyByID(c, userID)
 	if err != nil {
-		logging.WarnLogger.Printf("Erro ao buscar usuário: %v", err)
+		logging.Logger.Warn().
+			Err(err).
+			Str("user_id", userID.String()).
+			Str("operation", "get_user_by_id").
+			Msg("Erro ao buscar usuário")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não encontrado"})
 		return
 	}
@@ -128,13 +137,21 @@ func (h *AuthHandler) generateAndSaveTokens(c *gin.Context, user *models.User) {
 
 	accessToken, refreshToken, err := h.tokenService.CreateTokens(user.ID, roles, policies)
 	if err != nil {
-		logging.ErrorLogger.Printf("Falha ao gerar tokens para o usuário: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("user_id", user.ID.String()).
+			Str("operation", "create_tokens").
+			Msg("Falha ao gerar tokens para o usuário")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Falha ao gerar tokens"})
 		return
 	}
 
 	if err := h.tokenRedisService.SaveUserRedis(user, accessToken, refreshToken, h.tokenService.GetAccessDuration()); err != nil {
-		logging.ErrorLogger.Printf("Falha ao salvar informações do usuário no Redis: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("user_id", user.ID.String()).
+			Str("operation", "save_user_redis").
+			Msg("Falha ao salvar informações do usuário no Redis")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Falha ao salvar informações do usuário no Redis"})
 		return
 	}

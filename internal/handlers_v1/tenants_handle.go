@@ -1,12 +1,12 @@
-// internal/handlers_v1/tenants_handle.go
+// @file: internal/handlers_v1/tenants_handle.go
 
 package handlers_v1
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
+	"github.com/jeancarlosdanese/go-base-api/internal/logging"
 	"github.com/jeancarlosdanese/go-base-api/internal/services"
 
 	"github.com/gin-gonic/gin"
@@ -34,11 +34,14 @@ func (h *TenantsHandler) RegisterRoutes(router *gin.RouterGroup) {
 
 // getAllTenants busca todos os Tenants
 // @Summary Busca todos os Tenants
-// @Description Busca todos os Tenants
+// @Description Busca todos os Tenants (requer permissão de administração)
 // @Tags Tenants
 // @Accept  json
 // @Produce  json
+// @Security Bearer
 // @Success 200 {array} models.Tenant "Lista de Tenants"
+// @Failure 401 {object} models.HTTPError "Token não fornecido ou inválido"
+// @Failure 403 {object} models.HTTPError "Permissão negada"
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
 // @Router /api/v1/tenants [get]
 func (h *TenantsHandler) GetAll(c *gin.Context) {
@@ -53,13 +56,16 @@ func (h *TenantsHandler) GetAll(c *gin.Context) {
 
 // createTenant cria um novo Tenant
 // @Summary Cria um novo Tenant
-// @Description Adiciona um novo Tenant ao sistema
+// @Description Adiciona um novo Tenant ao sistema com API Key gerada automaticamente (requer permissão de administração)
 // @Tags Tenants
 // @Accept json
 // @Produce json
+// @Security Bearer
 // @Param tenant body models.Tenant true "Informações do Tenant"
-// @Success 201 {object} models.Tenant "Tenant Criado"
+// @Success 201 {object} models.Tenant "Tenant Criado com API Key"
 // @Failure 400 {object} models.HTTPError "Erro de Formato de Solicitação"
+// @Failure 401 {object} models.HTTPError "Token não fornecido ou inválido"
+// @Failure 403 {object} models.HTTPError "Permissão negada"
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
 // @Router /api/v1/tenants [post]
 func (h *TenantsHandler) Create(c *gin.Context) {
@@ -79,14 +85,17 @@ func (h *TenantsHandler) Create(c *gin.Context) {
 
 // getTenantById busca um tenant pelo ID.
 // @Summary Busca Tenant por ID
-// @Description Busca Tenant por ID
+// @Description Busca Tenant por ID (requer permissão de administração)
 // @Tags Tenants
 // @Accept  json
 // @Produce  json
-// @Param   id     path    string     true        "Tenant ID"
-// @Success 200 {object} models.Tenant "Tenant"
-// @Failure 404 {object} models.HTTPError "Tenant not found"
+// @Security Bearer
+// @Param   id     path    string     true        "Tenant ID (UUID)"
+// @Success 200 {object} models.Tenant "Tenant encontrado"
 // @Failure 400 {object} models.HTTPError "Invalid UUID format"
+// @Failure 401 {object} models.HTTPError "Token não fornecido ou inválido"
+// @Failure 403 {object} models.HTTPError "Permissão negada"
+// @Failure 404 {object} models.HTTPError "Tenant not found"
 // @Router /api/v1/tenants/{id} [get]
 func (h *TenantsHandler) GetById(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
@@ -105,20 +114,31 @@ func (h *TenantsHandler) GetById(c *gin.Context) {
 
 // updateTenant atualiza um tenant existente usando PUT.
 // @Summary Atualiza um Tenant existente
-// @Description Atualiza um Tenant existente com base no ID fornecido
+// @Description Atualiza completamente um Tenant existente com base no ID fornecido (PUT) (requer permissão de administração)
 // @Tags Tenants
 // @Accept  json
 // @Produce  json
-// @Param   id     path    string     true        "Tenant ID"
-// @Param   tenant body    models.Tenant true "Dados do Tenant"
+// @Security Bearer
+// @Param   id     path    string     true        "Tenant ID (UUID)"
+// @Param   tenant body    models.Tenant true "Dados completos do Tenant"
 // @Success 200 {object} models.Tenant "Tenant Atualizado"
 // @Failure 400 {object} models.HTTPError "ID Inválido ou Erro de Formato de Solicitação"
+// @Failure 401 {object} models.HTTPError "Token não fornecido ou inválido"
+// @Failure 403 {object} models.HTTPError "Permissão negada"
+// @Failure 404 {object} models.HTTPError "Tenant not found"
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
 // @Router /api/v1/tenants/{id} [put]
 func (h *TenantsHandler) Update(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id")) // Extrair o ID do recurso da URL
 	if err != nil {
-		log.Fatalf("Invalid UUID: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("id", c.Param("id")).
+			Str("operation", "update_tenant").
+			Msg("Invalid UUID format")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID format"})
+		c.Abort()
+		return
 	}
 
 	var tenant models.Tenant
@@ -142,20 +162,31 @@ func (h *TenantsHandler) Update(c *gin.Context) {
 
 // updateTenantPatch atualiza parcialmente um tenant existente usando PATCH.
 // @Summary Atualiza parcialmente um Tenant existente
-// @Description Atualiza parcialmente um Tenant existente com base no ID fornecido
+// @Description Atualiza parcialmente um Tenant existente com base no ID fornecido (PATCH) (requer permissão de administração)
 // @Tags Tenants
 // @Accept  json
 // @Produce  json
-// @Param   id     path    string     true        "Tenant ID"
-// @Param   tenant body    models.Tenant true "Dados atualizáveis do Tenant"
-// @Success 200 {object} gin.H "Mensagem de sucesso"
+// @Security Bearer
+// @Param   id     path    string     true        "Tenant ID (UUID)"
+// @Param   tenant body    map[string]interface{} true "Campos a serem atualizados (JSON parcial)"
+// @Success 200 {object} models.Tenant "Tenant Atualizado"
 // @Failure 400 {object} models.HTTPError "ID Inválido ou Erro de Formato de Solicitação"
+// @Failure 401 {object} models.HTTPError "Token não fornecido ou inválido"
+// @Failure 403 {object} models.HTTPError "Permissão negada"
+// @Failure 404 {object} models.HTTPError "Tenant not found"
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
 // @Router /api/v1/tenants/{id} [patch]
 func (h *TenantsHandler) UpdatePatch(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id")) // Extrair o ID do recurso da URL
 	if err != nil {
-		log.Fatalf("Invalid UUID: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("id", c.Param("id")).
+			Str("operation", "update_patch_tenant").
+			Msg("Invalid UUID format")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID format"})
+		c.Abort()
+		return
 	}
 
 	var updateData map[string]interface{}
@@ -179,19 +210,29 @@ func (h *TenantsHandler) UpdatePatch(c *gin.Context) {
 
 // deleteTenant exclui um tenant.
 // @Summary Exclui um Tenant
-// @Description Exclui um Tenant com base no ID fornecido
+// @Description Exclui um Tenant com base no ID fornecido (requer permissão de administração)
 // @Tags Tenants
 // @Accept  json
 // @Produce  json
-// @Param   id     path    string     true        "Tenant ID"
+// @Security Bearer
+// @Param   id     path    string     true        "Tenant ID (UUID)"
 // @Success 200 {object} gin.H "Mensagem de sucesso"
 // @Failure 400 {object} models.HTTPError "ID Inválido"
+// @Failure 401 {object} models.HTTPError "Token não fornecido ou inválido"
+// @Failure 403 {object} models.HTTPError "Permissão negada"
 // @Failure 500 {object} models.HTTPError "Erro Interno do Servidor"
 // @Router /api/v1/tenants/{id} [delete]
 func (h *TenantsHandler) Delete(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		log.Fatalf("Invalid UUID: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("id", c.Param("id")).
+			Str("operation", "delete_tenant").
+			Msg("Invalid UUID format")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID format"})
+		c.Abort()
+		return
 	}
 
 	// ctx := context.Background()

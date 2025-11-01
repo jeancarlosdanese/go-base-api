@@ -30,10 +30,17 @@ func (r *GormRepository[Entity]) FindByApiKey(apiKey, origin string) (*models.Te
 		Take(&tenant).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logging.InfoLogger.Printf("Tenant ou origem não encontrado: %s, %s", apiKey, origin)
+			logging.Logger.Info().
+				Str("origin", origin).
+				Str("operation", "find_by_apikey").
+				Msg("Tenant ou origem não encontrado")
 			return nil, errors.New("tenant ou origem não encontrado")
 		}
-		logging.ErrorLogger.Printf("Erro ao buscar Tenant por apiKey e origem: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("origin", origin).
+			Str("operation", "find_by_apikey").
+			Msg("Erro ao buscar Tenant por apiKey e origem")
 		return nil, err
 	}
 

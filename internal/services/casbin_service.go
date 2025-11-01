@@ -10,11 +10,10 @@
 package services
 
 import (
-	"log"
-
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
 	gormadapter "github.com/casbin/gorm-adapter/v3"
+	"github.com/jeancarlosdanese/go-base-api/internal/logging"
 	"gorm.io/gorm"
 )
 
@@ -38,7 +37,10 @@ func NewCasbinService(db *gorm.DB) (*CasbinService, error) {
 		m = r.sub == p.sub && keyMatch2(r.obj, p.obj) && regexMatch(r.act, p.act)
 	`)
 	if err != nil {
-		log.Printf("Erro ao carregar o modelo Casbin: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("operation", "load_casbin_model").
+			Msg("Erro ao carregar o modelo Casbin")
 		return nil, err
 	}
 
@@ -46,33 +48,58 @@ func NewCasbinService(db *gorm.DB) (*CasbinService, error) {
 	gormadapter.TurnOffAutoMigrate(db)
 	a, err := gormadapter.NewAdapterByDBUseTableName(db, "casbin", "rules_view")
 	if err != nil {
-		log.Printf("Erro ao criar o adaptador GORM para Casbin: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("operation", "create_casbin_adapter").
+			Msg("Erro ao criar o adaptador GORM para Casbin")
 		return nil, err
 	}
 
 	enforcer, err := casbin.NewEnforcer(m, a)
 	if err != nil {
-		log.Printf("Erro ao criar o enforcer Casbin: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("operation", "create_casbin_enforcer").
+			Msg("Erro ao criar o enforcer Casbin")
 		return nil, err
 	}
 
 	err = enforcer.LoadPolicy()
 	if err != nil {
-		log.Printf("Erro ao carregar as políticas: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("operation", "load_casbin_policies").
+			Msg("Erro ao carregar as políticas")
 		return nil, err
 	}
+
+	logging.Logger.Info().
+		Str("operation", "init_casbin").
+		Msg("Casbin inicializado com sucesso")
 
 	return &CasbinService{enforcer: enforcer}, nil
 }
 
 // CheckPermission logs and verifies permissions using Casbin enforcer
 func (cs *CasbinService) CheckPermission(sub, obj, act string) bool {
-	log.Printf("Checking permission for sub: %s, obj: %s, act: %s", sub, obj, act)
 	ok, err := cs.enforcer.Enforce(sub, obj, act)
 	if err != nil {
-		log.Printf("Error while checking permission: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("subject", sub).
+			Str("object", obj).
+			Str("action", act).
+			Str("operation", "check_permission").
+			Msg("Erro ao verificar permissão")
 		return false
 	}
-	log.Printf("Permission result for %s, %s, %s: %t", sub, obj, act, ok)
+
+	logging.Logger.Debug().
+		Str("subject", sub).
+		Str("object", obj).
+		Str("action", act).
+		Bool("allowed", ok).
+		Str("operation", "check_permission").
+		Msg("Permissão verificada")
 	return ok
 }

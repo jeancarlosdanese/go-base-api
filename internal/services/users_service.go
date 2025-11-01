@@ -4,7 +4,6 @@ package services
 
 import (
 	"errors"
-	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -64,13 +63,22 @@ func (s *UserService) CreateUserWithPassword(c *gin.Context, userCreate *models.
 func (s *UserService) Authenticate(c *gin.Context, email, password, origin string) (*models.User, error) {
 	user, err := s.Repo.FindByEmail(c, email, origin)
 	if err != nil {
-		logging.InfoLogger.Printf("Falha na autenticação do usuário")
+		logging.Logger.Info().
+			Err(err).
+			Str("email", email).
+			Str("origin", origin).
+			Str("operation", "authenticate").
+			Msg("Falha na autenticação do usuário")
 		return nil, err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		logging.InfoLogger.Printf("Tentativa de login com credenciais inválidas")
+		logging.Logger.Info().
+			Str("email", email).
+			Str("origin", origin).
+			Str("operation", "authenticate").
+			Msg("Tentativa de login com credenciais inválidas")
 		return nil, errors.New("senha inválida")
 	}
 
@@ -81,8 +89,11 @@ func (s *UserService) Authenticate(c *gin.Context, email, password, origin strin
 func (s *UserService) GetOnlyByID(c *gin.Context, id uuid.UUID) (*models.User, error) {
 	user, err := s.Repo.GetOnlyByID(c, id)
 	if err != nil {
-		log.Println(err)
-		logging.InfoLogger.Printf("Usuário não encontrado pelo ID fornecido")
+		logging.Logger.Info().
+			Err(err).
+			Str("user_id", id.String()).
+			Str("operation", "get_user_by_id").
+			Msg("Usuário não encontrado pelo ID fornecido")
 		return nil, errors.New("not found user by id")
 	}
 

@@ -1,12 +1,12 @@
-// internal/db/gorm.go
+// @file: internal/db/gorm.go
 
 package db
 
 import (
 	"fmt"
-	"log"
 	"os"
 
+	"github.com/jeancarlosdanese/go-base-api/internal/logging"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -33,6 +33,10 @@ func NewDatabaseConnection() (*gorm.DB, error) {
 	// Migrate the schema
 	// db.AutoMigrate(&models.Endpoint{}, &models.Role{}, &models.PolicyRole{}, &models.Tenant{}, &models.User{}, &models.PolicyUser{}, &models.UserRole{})
 
-	log.Printf("INFO: DB (Gorm) inicializado com sucesso!")
+	logging.Logger.Info().
+		Str("database", os.Getenv("DB_NAME")).
+		Str("host", os.Getenv("DB_HOST")).
+		Str("operation", "init_database").
+		Msg("DB (Gorm) inicializado com sucesso")
 	return db, nil
 }

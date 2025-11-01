@@ -1,14 +1,14 @@
-// internal/db/redis.go
+// @file: internal/db/redis.go
 
 package db
 
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"strconv" // Importe strconv para usar Atoi
 
+	"github.com/jeancarlosdanese/go-base-api/internal/logging"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -20,7 +20,11 @@ func InitializeRedis() {
 	redisDBStr := os.Getenv("REDIS_DB")      // Obtém a variável de ambiente como uma string
 	redisDB, err := strconv.Atoi(redisDBStr) // Converte de string para int
 	if err != nil {
-		log.Fatalf("ERROR: Não foi possível converter REDIS_DB para int: %v", err)
+		logging.Logger.Fatal().
+			Err(err).
+			Str("redis_db", redisDBStr).
+			Str("operation", "init_redis").
+			Msg("Não foi possível converter REDIS_DB para int")
 	}
 
 	redisClient = redis.NewClient(&redis.Options{
@@ -33,9 +37,19 @@ func InitializeRedis() {
 	ctx := context.Background()
 	_, err = redisClient.Ping(ctx).Result()
 	if err != nil {
-		log.Fatalf("ERROR: Não foi possível conectar ao Redis: %v", err)
+		logging.Logger.Fatal().
+			Err(err).
+			Str("addr", addr).
+			Int("db", redisDB).
+			Str("operation", "init_redis").
+			Msg("Não foi possível conectar ao Redis")
 	}
-	log.Println("INFO: Conexão com Redis estabelecida com sucesso!")
+
+	logging.Logger.Info().
+		Str("addr", addr).
+		Int("db", redisDB).
+		Str("operation", "init_redis").
+		Msg("Conexão com Redis estabelecida com sucesso")
 }
 
 // GetRedisClient retorna uma instância do cliente Redis.

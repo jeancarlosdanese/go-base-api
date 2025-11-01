@@ -3,8 +3,6 @@
 package services
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
 	"github.com/jeancarlosdanese/go-base-api/internal/logging"
@@ -35,7 +33,9 @@ func (s *TenantService) CreateTenantWithApiKey(c *gin.Context, tenant *models.Te
 		return nil, err
 	}
 
-	fmt.Printf("API_KEY: %v", apikey)
+	logging.Logger.Info().
+		Str("operation", "create_tenant_with_apikey").
+		Msg("API Key gerada para tenant")
 
 	tenant.ApiKey = &apikey
 
@@ -51,7 +51,11 @@ func (s *TenantService) CreateTenantWithApiKey(c *gin.Context, tenant *models.Te
 func (s *TenantService) ApiKeyAuthenticate(apiKey, origin string) (*models.Tenant, error) {
 	user, err := s.Repo.FindByApiKey(apiKey, origin)
 	if err != nil {
-		logging.InfoLogger.Printf("Erro ao buscar Tenant por apiKey: %v", err)
+		logging.Logger.Info().
+			Err(err).
+			Str("origin", origin).
+			Str("operation", "find_tenant_by_apikey").
+			Msg("Erro ao buscar Tenant por apiKey")
 		return nil, err
 	}
 

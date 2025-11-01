@@ -93,9 +93,33 @@ func getMigrationPath() string {
 }
 
 func getDSN() (string, error) {
+	// Tenta carregar .env.test da raiz do projeto (go-base-api/)
 	envFile := ".env.test"
-	if err := godotenv.Load(envFile); err != nil {
-		return "", fmt.Errorf("warning: %s file not found: %w", envFile, err)
+
+	// Verifica se estamos no diretório de testes e ajusta o caminho
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get current directory: %w", err)
+	}
+
+	// Se estiver em tests/integration, volta para a raiz (go-base-api/)
+	if filepath.Base(dir) == "integration" {
+		envFile = filepath.Join(dir, "../../.env.test")
+	} else if filepath.Base(filepath.Dir(dir)) == "tests" {
+		envFile = filepath.Join(dir, "../.env.test")
+	} else {
+		// Se estiver na raiz do go-base-api, usa diretamente
+		envFile = ".env.test"
+	}
+
+	// Converte para caminho absoluto
+	absPath, err := filepath.Abs(envFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to get absolute path: %w", err)
+	}
+
+	if err := godotenv.Load(absPath); err != nil {
+		return "", fmt.Errorf("warning: %s file not found (tried: %s): %w", envFile, absPath, err)
 	}
 
 	user := url.QueryEscape(os.Getenv("DB_USER"))

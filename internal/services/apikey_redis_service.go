@@ -1,13 +1,13 @@
-// internal/services/apikey_redis_service.go
+// @file: internal/services/apikey_redis_service.go
 
 package services
 
 import (
 	"encoding/json"
-	"log"
 	"time"
 
 	"github.com/jeancarlosdanese/go-base-api/internal/domain/models"
+	"github.com/jeancarlosdanese/go-base-api/internal/logging"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -37,7 +37,10 @@ func (s *ApiKeyRedisService) SaveApiKeyDataRedis(tenant *models.Tenant, apiKey s
 		return err
 	}
 	if err := s.RedisService.Set("apiKey:"+apiKey, apiKeyData, accessDuration); err != nil {
-		log.Printf("ERROR: Error saving API key data to Redis: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("operation", "save_apikey_redis").
+			Msg("Erro ao salvar dados da API Key no Redis")
 		return err
 	}
 	return nil
@@ -46,33 +49,49 @@ func (s *ApiKeyRedisService) SaveApiKeyDataRedis(tenant *models.Tenant, apiKey s
 func (s *ApiKeyRedisService) GetTenantRedisFromApiKey(apiKey, origin string) (*models.TenantRedis, error) {
 	result, err := s.RedisService.Get("apiKey:" + apiKey)
 	if err != nil && err != redis.Nil {
-		log.Printf("ERROR: Error retrieving from Redis: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("operation", "get_tenant_from_apikey").
+			Msg("Erro ao recuperar dados do Redis")
 		return nil, err
 	}
 
 	if result == "" {
 		tenant, err := s.TenantService.ApiKeyAuthenticate(apiKey, origin)
 		if err != nil {
-			log.Printf("ERROR: Error authenticating API Key: %v", err)
+			logging.Logger.Error().
+				Err(err).
+				Str("origin", origin).
+				Str("operation", "authenticate_apikey").
+				Msg("Erro ao autenticar API Key")
 			return nil, err
 		}
 
 		if err := s.SaveApiKeyDataRedis(tenant, apiKey, s.AccessDuration); err != nil {
-			log.Printf("ERROR: Error saving API Key Data to Redis: %v", err)
+			logging.Logger.Error().
+				Err(err).
+				Str("operation", "save_apikey_data_redis").
+				Msg("Erro ao salvar dados da API Key no Redis")
 			return nil, err
 		}
 
 		// Retrieve again to confirm saving was successful
 		result, err = s.RedisService.Get("apiKey:" + apiKey)
 		if err != nil {
-			log.Printf("ERROR: Error verifying stored key in Redis: %v", err)
+			logging.Logger.Error().
+				Err(err).
+				Str("operation", "verify_stored_apikey").
+				Msg("Erro ao verificar chave armazenada no Redis")
 			return nil, err
 		}
 	}
 
 	var apiKeyDataRedis models.TenantRedis
 	if err := json.Unmarshal([]byte(result), &apiKeyDataRedis); err != nil {
-		log.Printf("ERROR: Could not unmarshal API key data: %v", err)
+		logging.Logger.Error().
+			Err(err).
+			Str("operation", "unmarshal_apikey_data").
+			Msg("Erro ao fazer unmarshal dos dados da API Key")
 		return nil, err
 	}
 
