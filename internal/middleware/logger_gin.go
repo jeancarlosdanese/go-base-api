@@ -95,18 +95,29 @@ func GinRecoveryMiddleware() gin.HandlerFunc {
 
 // SetupGinLogger configura o logger do Gin para usar zerolog
 func SetupGinLogger() {
-	// Desabilita o logger padrão do Gin
-	gin.SetMode(gin.ReleaseMode)
+    // Define o modo do Gin a partir de GIN_MODE ou GO_ENV
+    mode := os.Getenv("GIN_MODE")
+    if mode == "" {
+        goEnv := os.Getenv("GO_ENV")
+        switch goEnv {
+        case "prod", "production":
+            mode = gin.ReleaseMode
+        case "test":
+            mode = gin.TestMode
+        default:
+            mode = gin.DebugMode
+        }
+    }
+    gin.SetMode(mode)
 
-	// Configura Gin para usar zerolog através do output
-	if os.Getenv("GIN_MODE") != "release" {
-		gin.DefaultWriter = &zerologWriter{level: zerolog.InfoLevel}
-		gin.DefaultErrorWriter = &zerologWriter{level: zerolog.ErrorLevel}
-	} else {
-		// Em produção, não loga para stdout
-		gin.DefaultWriter = os.Stdout
-		gin.DefaultErrorWriter = os.Stderr
-	}
+    // Configura writers do Gin
+    if mode != gin.ReleaseMode {
+        gin.DefaultWriter = &zerologWriter{level: zerolog.InfoLevel}
+        gin.DefaultErrorWriter = &zerologWriter{level: zerolog.ErrorLevel}
+    } else {
+        gin.DefaultWriter = os.Stdout
+        gin.DefaultErrorWriter = os.Stderr
+    }
 }
 
 // zerologWriter é um writer que redireciona output do Gin para zerolog

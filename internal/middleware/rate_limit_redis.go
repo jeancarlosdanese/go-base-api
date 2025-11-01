@@ -16,8 +16,9 @@ import (
 // RateLimitRedisMiddleware implementa controle de taxa de requisições por IP usando Redis
 func RateLimitRedisMiddleware(redisClient *redis.Client, requests int, window time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Pula rate limiting para health check
-		if c.Request.URL.Path == "/health" {
+		// Pula rate limiting para endpoints públicos
+		path := c.Request.URL.Path
+		if path == "/health" || path == "/healthz" || path == "/readyz" || path == "/metrics" {
 			c.Next()
 			return
 		}

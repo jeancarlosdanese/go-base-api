@@ -237,7 +237,7 @@ host: http://localhost:5001
 info:
   contact:
     name: Go Base API Support
-    url: https://github.com/jeancarlosdanese/go-base-api/go-api
+    url: https://github.com/jeancarlosdanese/go-base-api
   description: API REST base com autenticação JWT, RBAC (Casbin), multi-tenancy, rate
     limiting (Redis) e métricas Prometheus. Template completo para desenvolvimento
     de APIs Go com arquitetura limpa.

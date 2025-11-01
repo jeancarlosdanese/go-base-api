@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -72,6 +73,10 @@ func SetupRouter(r *gin.Engine, sc *app.ServicesContainer) {
 
 	// Metrics endpoint - expõe métricas Prometheus
 	r.GET("/metrics", metricsHandlerWrapper())
+
+	// Endpoints de liveness e readiness
+	r.GET("/healthz", livenessHandler())
+	r.GET("/readyz", readinessHandler(sc.DB, sc.RedisClient))
 
 	// Setup da rota do Swagger com redirecionamento automático
 	swaggerHandler := ginSwagger.WrapHandler(swaggerFiles.Handler)
@@ -375,6 +380,20 @@ func healthCheckHandlerWrapper(db *gorm.DB, redisClient *redis.Client) gin.Handl
 // @Success 200 {string} string "Métricas Prometheus em formato texto"
 // @Router /metrics [get]
 func metricsHandlerWrapper() gin.HandlerFunc {
+	// Proteção opcional via BasicAuth para produção
+	user := os.Getenv("METRICS_BASIC_AUTH_USER")
+	pass := os.Getenv("METRICS_BASIC_AUTH_PASS")
+	if user != "" && pass != "" {
+		return func(c *gin.Context) {
+			u, p, ok := c.Request.BasicAuth()
+			if !ok || u != user || p != pass {
+				c.Header("WWW-Authenticate", "Basic realm=restricted, charset=\"UTF-8\"")
+				c.AbortWithStatus(http.StatusUnauthorized)
+				return
+			}
+			gin.WrapH(promhttp.Handler())(c)
+		}
+	}
 	return gin.WrapH(promhttp.Handler())
 }
 
@@ -409,6 +428,31 @@ func HealthCheckHandler(db *gorm.DB, redisClient *redis.Client) gin.HandlerFunc 
 
 		c.JSON(statusCode, health)
 	}
+}
+
+// livenessHandler simples para verificar se o processo está vivo
+// @Summary Liveness probe
+// @Description Verifica se o processo está vivo
+// @Tags System
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Router /healthz [get]
+func livenessHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	}
+}
+
+// readinessHandler verifica dependências externas
+// @Summary Readiness probe
+// @Description Verifica se as dependências externas estão prontas (DB e Redis)
+// @Tags System
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 503 {object} map[string]interface{}
+// @Router /readyz [get]
+func readinessHandler(db *gorm.DB, redisClient *redis.Client) gin.HandlerFunc {
+	return HealthCheckHandler(db, redisClient)
 }
 
 // checkDatabaseHealth verifica a saúde do banco de dados
@@ -505,8 +549,9 @@ var (
 // RateLimitMiddleware implementa controle de taxa de requisições por IP
 func RateLimitMiddleware(requests int, window time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Pula rate limiting para health check
-		if c.Request.URL.Path == "/health" {
+		// Pula rate limiting para endpoints públicos
+		path := c.Request.URL.Path
+		if path == "/health" || path == "/healthz" || path == "/readyz" || path == "/metrics" {
 			c.Next()
 			return
 		}

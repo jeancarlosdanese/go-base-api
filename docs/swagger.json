@@ -4,10 +4,10 @@
         "description": "API REST base com autenticação JWT, RBAC (Casbin), multi-tenancy, rate limiting (Redis) e métricas Prometheus. Template completo para desenvolvimento de APIs Go com arquitetura limpa.",
         "title": "Go Base API",
         "termsOfService": "https://github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE",
-        "contact": {
-            "name": "Go Base API Support",
-            "url": "https://github.com/jeancarlosdanese/go-base-api/go-api"
-        },
+    "contact": {
+      "name": "Go Base API Support",
+      "url": "https://github.com/jeancarlosdanese/go-base-api"
+    },
         "license": {
             "name": "MIT",
             "url": "https://github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE"

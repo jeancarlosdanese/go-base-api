@@ -17,6 +17,7 @@ import (
 	"github.com/jeancarlosdanese/go-base-api/internal/routes" // Importa o pacote de rotas
 
 	"github.com/gin-gonic/gin"
+	"github.com/jeancarlosdanese/go-base-api/docs"
 )
 
 // @title 							Go Base API
@@ -37,6 +38,13 @@ func main() {
 
 	// Configura o logger do Gin para usar zerolog
 	middleware.SetupGinLogger()
+
+	// Configura versão do Swagger em runtime
+	version := os.Getenv("SERVICE_VERSION")
+	if version == "" {
+		version = "1.0.0"
+	}
+	docs.SwaggerInfo.Version = version
 
 	r := gin.Default()
 

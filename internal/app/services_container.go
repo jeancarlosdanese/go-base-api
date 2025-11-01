@@ -60,20 +60,24 @@ func NewServicesContainer() (*ServicesContainer, error) {
 		return nil, err
 	}
 
-	// JWT_ACCESS_DURATION=24h
-	accessDuration, err := parseDurationWithDays(os.Getenv("JWT_ACCESS_DURATION"))
-	if err != nil {
-		return nil, err
-	}
-	// JWT_REFRESH_DURATION=90d
-	refreshDuration, err := parseDurationWithDays(os.Getenv("JWT_REFRESH_DURATION"))
-	if err != nil {
-		return nil, err
-	}
+    // JWT durations com defaults seguros
+    accessStr := os.Getenv("JWT_ACCESS_DURATION")
+    refreshStr := os.Getenv("JWT_REFRESH_DURATION")
+    if strings.TrimSpace(accessStr) == "" {
+        accessStr = "24h"
+    }
+    if strings.TrimSpace(refreshStr) == "" {
+        refreshStr = "90d"
+    }
 
-	if accessDuration == 0 || refreshDuration == 0 {
-		return nil, errors.New("JWT_ACCESS_DURATION or JWT_REFRESH_DURATION is invalid")
-	}
+    accessDuration, err := parseDurationWithDays(accessStr)
+    if err != nil {
+        return nil, err
+    }
+    refreshDuration, err := parseDurationWithDays(refreshStr)
+    if err != nil {
+        return nil, err
+    }
 
 	tokenService := services.NewTokenService(os.Getenv("JWT_SECRET_KEY"), accessDuration, refreshDuration)
 

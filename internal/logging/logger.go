@@ -13,6 +13,9 @@ import (
 var (
 	// Logger é a instância global do logger zerolog
 	Logger zerolog.Logger
+
+    // ServiceVersion pode ser injetada via ldflags: -X github.com/jeancarlosdanese/go-base-api/internal/logging.ServiceVersion=1.0.0
+    ServiceVersion = "dev"
 )
 
 func init() {
@@ -38,11 +41,17 @@ func init() {
 			Logger()
 	}
 
-	// Adiciona contexto global (service name, version, etc.)
-	Logger = Logger.With().
-		Str("service", "go-base-api").
-		Str("version", "1.0.0").
-		Logger()
+    // Resolve versão do serviço (env tem precedência sobre default/ldflags)
+    version := ServiceVersion
+    if envVersion := os.Getenv("SERVICE_VERSION"); envVersion != "" {
+        version = envVersion
+    }
+
+    // Adiciona contexto global (service name, version, etc.)
+    Logger = Logger.With().
+        Str("service", "go-base-api").
+        Str("version", version).
+        Logger()
 
 	// Substitui o logger padrão do Go para usar zerolog
 	log.Logger = Logger

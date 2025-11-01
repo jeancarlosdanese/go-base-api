@@ -12,7 +12,7 @@ const docTemplate = `{
         "termsOfService": "https://github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE",
         "contact": {
             "name": "Go Base API Support",
-            "url": "https://github.com/jeancarlosdanese/go-base-api/go-api"
+            "url": "https://github.com/jeancarlosdanese/go-base-api"
         },
         "license": {
             "name": "MIT",
