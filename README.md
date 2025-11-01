@@ -56,28 +56,31 @@ O **Go Base API** é uma aplicação robusta e escalável desenvolvida em Go que
 
 ### 📋 Pré-requisitos
 
-| Componente | Versão | Descrição |
-|------------|--------|-----------|
-| **Go** | 1.24.7+ | Linguagem principal |
-| **PostgreSQL** | 15+ | Banco de dados principal |
-| **Redis** | 7+ | Cache e sessão |
-| **Git** | 2.30+ | Controle de versão |
+| Componente     | Versão  | Descrição                |
+| -------------- | ------- | ------------------------ |
+| **Go**         | 1.24.7+ | Linguagem principal      |
+| **PostgreSQL** | 15+     | Banco de dados principal |
+| **Redis**      | 7+      | Cache e sessão           |
+| **Git**        | 2.30+   | Controle de versão       |
 
 ### 🛠️ Instalação
 
 1. **Clone o repositório:**
+
 ```bash
 git clone https://github.com/jeancarlosdanese/go-base-api.git
 cd go-base-api
 ```
 
 2. **Instale as dependências:**
+
 ```bash
 go mod download
 go mod tidy
 ```
 
 3. **Configure o ambiente:**
+
 ```bash
 # Copie o arquivo de exemplo
 cp .env.example .env
@@ -87,6 +90,7 @@ nano .env
 ```
 
 4. **Configure o banco de dados:**
+
 ```bash
 # Execute as migrações
 migrate -path ./migrations -database "postgresql://your_user:your_password@localhost:5432/go_base_api?sslmode=disable" up
@@ -96,6 +100,7 @@ docker run --name postgres-dev -e POSTGRES_DB=go_base_api -e POSTGRES_USER=your_
 ```
 
 5. **Execute a aplicação:**
+
 ```bash
 # Desenvolvimento
 go run ./cmd/go_api
@@ -168,6 +173,12 @@ curl http://localhost:5001/health
 curl http://localhost:5001/metrics
 ```
 
+Se protegidos por BasicAuth (produção):
+
+```bash
+curl -u $METRICS_BASIC_AUTH_USER:$METRICS_BASIC_AUTH_PASS http://localhost:5001/metrics
+```
+
 ```json
 {
   "timestamp": "2025-09-18T15:53:15Z",
@@ -200,6 +211,7 @@ curl http://localhost:5001/static/favicon.ico
 ```
 
 **Características:**
+
 - ✅ Favicon.ico otimizado (134 bytes)
 - ✅ Cache automático (24 horas)
 - ✅ Headers apropriados para arquivos estáticos
@@ -207,30 +219,32 @@ curl http://localhost:5001/static/favicon.ico
 
 ## 📋 Endpoints da API
 
-| Método | Endpoint | Descrição | Autenticação |
-|--------|----------|-----------|-------------|
-| `GET` | `/favicon.ico` | Ícone da aplicação | ❌ Público |
-| `GET` | `/static/*` | Arquivos estáticos | ❌ Público |
-| `GET` | `/health` | Health check da aplicação | ❌ Público |
-| `GET` | `/metrics` | Métricas de monitoramento | ❌ Público |
-| `GET` | `/swagger/` | Documentação Swagger (redireciona para index.html) | ❌ Público |
-| `GET` | `/swagger/index.html` | Interface Swagger UI | ❌ Público |
-| `GET` | `/swagger/doc.json` | Documentação Swagger JSON | ❌ Público |
-| `POST` | `/api/v1/auth/login` | Login de usuário | ❌ Público |
-| `POST` | `/api/v1/auth/refresh` | Refresh token | ❌ Público |
-| `GET` | `/api/v1/auth-apikey/tenant-by-apikey` | Busca tenant por API Key | ❌ Público |
-| `GET` | `/api/v1/tenants` | Lista tenants | ✅ JWT + Role |
-| `POST` | `/api/v1/tenants` | Cria tenant | ✅ JWT + Role |
-| `GET` | `/api/v1/tenants/:id` | Busca tenant por ID | ✅ JWT + Role |
-| `PUT` | `/api/v1/tenants/:id` | Atualiza tenant | ✅ JWT + Role |
-| `PATCH` | `/api/v1/tenants/:id` | Atualiza tenant (parcial) | ✅ JWT + Role |
-| `DELETE` | `/api/v1/tenants/:id` | Remove tenant | ✅ JWT + Role |
-| `GET` | `/api/v1/users` | Lista usuários | ✅ JWT + Role |
-| `POST` | `/api/v1/users` | Cria usuário | ✅ JWT + Role |
-| `GET` | `/api/v1/users/:id` | Busca usuário por ID | ✅ JWT + Role |
-| `PUT` | `/api/v1/users/:id` | Atualiza usuário | ✅ JWT + Role |
-| `PATCH` | `/api/v1/users/:id` | Atualiza usuário (parcial) | ✅ JWT + Role |
-| `DELETE` | `/api/v1/users/:id` | Remove usuário | ✅ JWT + Role |
+| Método   | Endpoint                               | Descrição                                          | Autenticação  |
+| -------- | -------------------------------------- | -------------------------------------------------- | ------------- |
+| `GET`    | `/favicon.ico`                         | Ícone da aplicação                                 | ❌ Público    |
+| `GET`    | `/static/*`                            | Arquivos estáticos                                 | ❌ Público    |
+| `GET`    | `/health`                              | Health check da aplicação                          | ❌ Público    |
+| `GET`    | `/healthz`                             | Liveness probe (processo vivo)                     | ❌ Público    |
+| `GET`    | `/readyz`                              | Readiness probe (dependências prontas)             | ❌ Público    |
+| `GET`    | `/metrics`                             | Métricas de monitoramento (opcional BasicAuth)     | ❌ Público    |
+| `GET`    | `/swagger/`                            | Documentação Swagger (redireciona para index.html) | ❌ Público    |
+| `GET`    | `/swagger/index.html`                  | Interface Swagger UI                               | ❌ Público    |
+| `GET`    | `/swagger/doc.json`                    | Documentação Swagger JSON                          | ❌ Público    |
+| `POST`   | `/api/v1/auth/login`                   | Login de usuário                                   | ❌ Público    |
+| `POST`   | `/api/v1/auth/refresh`                 | Refresh token                                      | ❌ Público    |
+| `GET`    | `/api/v1/auth-apikey/tenant-by-apikey` | Busca tenant por API Key                           | ❌ Público    |
+| `GET`    | `/api/v1/tenants`                      | Lista tenants                                      | ✅ JWT + Role |
+| `POST`   | `/api/v1/tenants`                      | Cria tenant                                        | ✅ JWT + Role |
+| `GET`    | `/api/v1/tenants/:id`                  | Busca tenant por ID                                | ✅ JWT + Role |
+| `PUT`    | `/api/v1/tenants/:id`                  | Atualiza tenant                                    | ✅ JWT + Role |
+| `PATCH`  | `/api/v1/tenants/:id`                  | Atualiza tenant (parcial)                          | ✅ JWT + Role |
+| `DELETE` | `/api/v1/tenants/:id`                  | Remove tenant                                      | ✅ JWT + Role |
+| `GET`    | `/api/v1/users`                        | Lista usuários                                     | ✅ JWT + Role |
+| `POST`   | `/api/v1/users`                        | Cria usuário                                       | ✅ JWT + Role |
+| `GET`    | `/api/v1/users/:id`                    | Busca usuário por ID                               | ✅ JWT + Role |
+| `PUT`    | `/api/v1/users/:id`                    | Atualiza usuário                                   | ✅ JWT + Role |
+| `PATCH`  | `/api/v1/users/:id`                    | Atualiza usuário (parcial)                         | ✅ JWT + Role |
+| `DELETE` | `/api/v1/users/:id`                    | Remove usuário                                     | ✅ JWT + Role |
 
 ### 📖 Documentação Swagger
 
@@ -242,6 +256,7 @@ A documentação completa da API está disponível via Swagger UI:
 **Nota**: O endpoint `/swagger/` redireciona automaticamente para `/swagger/index.html` para uma melhor experiência de usuário.
 
 **Exemplo de uso:**
+
 ```bash
 # Acessar documentação interativa
 curl http://localhost:5001/swagger/
@@ -255,16 +270,19 @@ curl http://localhost:5001/swagger/doc.json
 Para usar a API no Postman, você pode:
 
 1. **Links diretos na documentação:**
+
    - Acesse: http://localhost:5001/swagger/
    - Na seção "📥 Downloads e Ferramentas", clique nos links:
      - [⬇️ Baixar Coleção Postman](/docs/postman_collection.json)
    - O arquivo será baixado automaticamente
 
 2. **URLs diretas:**
+
    - Coleção Postman: http://localhost:5001/docs/postman_collection.json
    - Documentação JSON: http://localhost:5001/docs/swagger.json
 
 3. **Comando alternativo:**
+
 ```bash
 # Baixar coleção diretamente
 curl -o postman_collection.json http://localhost:5001/docs/postman_collection.json
@@ -287,11 +305,13 @@ make insomnia
 ```
 
 **Sequência importante:**
+
 1. **`make docs`** - Gera documentação atualizada dos endpoints
 2. **`make postman`** - Cria collection baseada na documentação
 3. **`make insomnia`** - Cria collection baseada na documentação
 
 **Arquivos gerados:**
+
 - `docs/swagger.json` - Documentação OpenAPI (gerada por `make docs`)
 - `docs/postman_collection.json` - Coleção pronta para Postman (gerada por `make postman`)
 - `docs/insomnia_collection.yaml` - Arquivo YAML para importação no Insomnia (gerado por `make insomnia`)
@@ -302,6 +322,7 @@ make insomnia
 Para usar a API no Insomnia:
 
 1. **Links diretos na documentação:**
+
    - Acesse: http://localhost:5001/swagger/
    - Na seção "📥 Downloads e Ferramentas", clique nos links:
      - [⬇️ Arquivo Insomnia (YAML)](/docs/insomnia_collection.yaml) - Para importação direta
@@ -309,10 +330,12 @@ Para usar a API no Insomnia:
    - Abra o Insomnia e importe o arquivo `insomnia_collection.yaml`
 
 2. **URLs diretas:**
+
    - Arquivo principal: http://localhost:5001/docs/insomnia_collection.yaml
    - Instruções completas: http://localhost:5001/docs/insomnia_import_instructions.md
 
 3. **Comando alternativo:**
+
 ```bash
 # Baixar arquivos para Insomnia
 curl -o insomnia_collection.yaml http://localhost:5001/docs/insomnia_collection.yaml
@@ -338,6 +361,7 @@ swag init -g cmd/go_api/main.go --output docs/ --parseDependency --parseInternal
 ```
 
 **✨ Características:**
+
 - ✅ Nomes abreviados (`PersonType`, `Tenant`, `User` em vez de caminhos completos)
 - ✅ Documentação completa de todas as rotas
 - ✅ Tipos de dados bem definidos
@@ -401,13 +425,27 @@ JWT_REFRESH_DURATION=720h
 # Logs
 LOG_LEVEL=info
 LOG_FORMAT=json
+
+# Observabilidade / Versão
+SERVICE_VERSION=1.0.0
+
+# Proteção opcional do /metrics (produção)
+# Se definidos, /metrics exige BasicAuth
+METRICS_BASIC_AUTH_USER=
+METRICS_BASIC_AUTH_PASS=
+```
+
+> Dica: você pode definir a versão em tempo de build usando ldflags:
+
+```bash
+go build -ldflags "-X github.com/jeancarlosdanese/go-base-api/internal/logging.ServiceVersion=1.0.0" -o bin/essentia-api ./cmd/go_api
 ```
 
 ### Docker
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 services:
   api:
     build: .
@@ -485,18 +523,29 @@ air
 ### Health Checks
 
 O endpoint `/health` fornece informações detalhadas sobre:
+
 - Status da aplicação
 - Conectividade com PostgreSQL
 - Estatísticas de conexões do banco
 - Status do Redis
 
+Endpoints adicionais para orquestradores:
+
+- `/healthz` (liveness): verifica se o processo está vivo.
+- `/readyz` (readiness): reutiliza as verificações do `/health` (DB e Redis) e retorna 503 se alguma dependência estiver indisponível.
+
 ### Métricas
 
 O endpoint `/metrics` fornece:
+
 - Contadores de requisições por método
 - Distribuição de status codes
 - Tempo médio de resposta
 - Estatísticas de performance
+
+Notas:
+- Em produção, recomenda-se restringir acesso a `/metrics` (rede interna, reverse-proxy, ou BasicAuth via `METRICS_BASIC_AUTH_USER` e `METRICS_BASIC_AUTH_PASS`).
+- Para reduzir cardinalidade, caminhos são normalizados (ex.: `/api/v1/users/123` → `/api/v1/users/:id`).
 
 ### Logs
 
@@ -518,6 +567,7 @@ O endpoint `/metrics` fornece:
 ### Headers de Segurança
 
 Todos os endpoints incluem headers de segurança:
+
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `X-XSS-Protection: 1; mode=block`
@@ -531,6 +581,11 @@ Todos os endpoints incluem headers de segurança:
 - **50 requests por minuto** por IP
 - Headers informativos: `X-RateLimit-*`
 - Resposta 429 para limite excedido
+
+Detalhes:
+- Backend usa Redis quando disponível (chave por IP com TTL) e possui fallback in-memory.
+- Endpoints isentos: `/health`, `/healthz`, `/readyz`, `/metrics`.
+- Considera cabeçalhos de proxy (`X-Real-IP`, `X-Forwarded-For`) para identificar o IP real.
 
 ### Autenticação e Autorização
 
@@ -565,26 +620,31 @@ go test -bench=. -benchmem ./tests/benchmark/
 ## 🛠️ Tecnologias
 
 ### Core
+
 - **[Go 1.24.7](https://golang.org/)** - Linguagem principal
 - **[Gin](https://gin-gonic.com/)** - Web framework
 - **[GORM](https://gorm.io/)** - ORM para PostgreSQL
 - **[Redis](https://redis.io/)** - Cache e sessões
 
 ### Segurança
+
 - **[JWT](https://github.com/golang-jwt/jwt)** - Autenticação
 - **[Casbin](https://casbin.org/)** - Autorização RBAC
 - **[bcrypt](https://golang.org/x/crypto/bcrypt)** - Hash de senhas
 
 ### Monitoramento
+
 - **[Gin-contrib/gzip](https://github.com/gin-contrib/gzip)** - Compressão
 - **[Custom Metrics](https://github.com/jeancarlosdanese/go-base-api)** - Métricas próprias
 
 ### Desenvolvimento
+
 - **[Testify](https://github.com/stretchr/testify)** - Testes
 - **[Swaggo](https://github.com/swaggo/swag)** - Documentação API
 - **[Air](https://github.com/cosmtrek/air)** - Hot reload
 
 ### Infraestrutura
+
 - **PostgreSQL 15+** - Banco de dados
 - **Redis 7+** - Cache
 - **Docker** - Containerização
@@ -613,6 +673,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ## 👨‍💻 Autor
 
 **Jean Carlos Danese**
+
 - GitHub: [@jeancarlosdanese](https://github.com/jeancarlosdanese)
 - LinkedIn: [Jean Carlos Danese](https://linkedin.com/in/jeancarlosdanese)
 - Email: jean.danese@example.com
@@ -630,6 +691,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ### Erro 400 no Login: "Parâmetros de entrada inválidos"
 
 **Sintomas:**
+
 ```json
 {
   "error": "Parâmetros de entrada inválidos",
@@ -641,6 +703,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 **Soluções:**
 
 1. **Certifique-se do Content-Type:**
+
 ```bash
 # ✅ CORRETO
 curl -X POST http://localhost:5001/api/v1/auth/login \
@@ -654,6 +717,7 @@ curl -X POST http://localhost:5001/api/v1/auth/login \
 ```
 
 2. **Verifique os campos obrigatórios:**
+
    - `email`: obrigatório e deve ser um email válido
    - `password`: obrigatório
 
@@ -664,6 +728,7 @@ curl -X POST http://localhost:5001/api/v1/auth/login \
 ### Erro 400: "Origem não fornecida"
 
 **Sintomas:**
+
 ```json
 {
   "error": "Origem não fornecida",
@@ -672,6 +737,7 @@ curl -X POST http://localhost:5001/api/v1/auth/login \
 ```
 
 **Solução:**
+
 ```bash
 # Adicione o header Origin
 curl -X POST http://localhost:5001/api/v1/auth/login \
@@ -683,6 +749,7 @@ curl -X POST http://localhost:5001/api/v1/auth/login \
 ### Erro 401: "usuário ou origem não encontrado"
 
 **Sintomas:**
+
 ```json
 {
   "error": "usuário ou origem não encontrado"
@@ -690,11 +757,13 @@ curl -X POST http://localhost:5001/api/v1/auth/login \
 ```
 
 **Possíveis causas:**
+
 1. Email ou senha incorretos
 2. Usuário não existe no banco
 3. Origin não está na lista de origens permitidas do tenant
 
 **Soluções:**
+
 1. Verifique se executou as migrações
 2. Certifique-se que o usuário master foi criado
 3. Verifique se o tenant tem `localhost` nas origens permitidas
@@ -702,11 +771,13 @@ curl -X POST http://localhost:5001/api/v1/auth/login \
 ### Erro 500: Problemas Internos
 
 **Sintomas:**
+
 - Erro 500 Internal Server Error
 - Problemas de conexão com banco
 - Problemas com Redis
 
 **Verificações:**
+
 ```bash
 # Verificar se o servidor está saudável
 curl http://localhost:5001/health
@@ -721,12 +792,14 @@ curl http://localhost:5001/metrics
 ### Debug Geral
 
 1. **Verificar logs do servidor:**
+
 ```bash
 # Inicie o servidor e observe os logs
 go run cmd/go_api/main.go
 ```
 
 2. **Testar endpoints básicos:**
+
 ```bash
 # Health check
 curl http://localhost:5001/health
@@ -739,6 +812,7 @@ curl http://localhost:5001/docs/swagger.json
 ```
 
 3. **Verificar configurações:**
+
 ```bash
 # Verificar se o .env está correto
 # Verificar se as migrações foram executadas
