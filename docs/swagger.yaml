@@ -157,6 +157,38 @@ definitions:
       name:
         type: string
     type: object
+  Token:
+    properties:
+      policies:
+        items:
+          type: string
+        type: array
+      refreshToken:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+      token:
+        type: string
+      type:
+        type: string
+      user:
+        $ref: '#/definitions/TokenUser'
+    type: object
+  TokenUser:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      thumbnail:
+        type: string
+      username:
+        type: string
+    type: object
   User:
     properties:
       created_at:
@@ -205,14 +237,16 @@ host: http://localhost:5001
 info:
   contact:
     name: Go Base API Support
-    url: https://github.com/jeancarlosdanese/go-base-api
-  description: This is a Go Base API.
+    url: https://github.com/jeancarlosdanese/go-base-api/go-api
+  description: API REST base com autenticação JWT, RBAC (Casbin), multi-tenancy, rate
+    limiting (Redis) e métricas Prometheus. Template completo para desenvolvimento
+    de APIs Go com arquitetura limpa.
   license:
     name: MIT
     url: https://github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
   termsOfService: https://github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE
-  title: Swagger Go Base API
-  version: 0.0.7
+  title: Go Base API
+  version: 1.0.0
 paths:
   /api/v1/auth-apikey/tenant-by-apikey:
     get:
@@ -241,7 +275,8 @@ paths:
     post:
       consumes:
       - application/x-www-form-urlencoded
-      description: Loga um usuário usando email e senha
+      description: Loga um usuário usando email e senha. Retorna access token e refresh
+        token
       parameters:
       - description: Email do Usuário
         in: formData
@@ -253,16 +288,25 @@ paths:
         name: password
         required: true
         type: string
+      - description: 'Origem da requisição (ex: localhost, example.com)'
+        in: header
+        name: Origin
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: Token gerado com sucesso
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/Token'
         "400":
-          description: Erro de autenticação
+          description: Erro de autenticação - parâmetros inválidos ou origem não fornecida
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Credenciais inválidas
           schema:
             additionalProperties:
               type: string
@@ -274,9 +318,10 @@ paths:
     post:
       consumes:
       - application/x-www-form-urlencoded
-      description: Renova o token usando o refreshToken
+      description: Renova o access token usando o refresh token. Retorna novos access
+        token e refresh token
       parameters:
-      - description: Refresh Token
+      - description: Refresh Token válido
         in: formData
         name: refreshToken
         required: true
@@ -287,10 +332,15 @@ paths:
         "200":
           description: Token renovado com sucesso
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/Token'
         "400":
-          description: Erro de autenticação
+          description: Parâmetros inválidos
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Token inválido ou expirado
           schema:
             additionalProperties:
               type: string
@@ -302,7 +352,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Busca todos os Tenants
+      description: Busca todos os Tenants (requer permissão de administração)
       produces:
       - application/json
       responses:
@@ -312,17 +362,28 @@ paths:
             items:
               $ref: '#/definitions/Tenant'
             type: array
+        "401":
+          description: Token não fornecido ou inválido
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Permissão negada
+          schema:
+            $ref: '#/definitions/HTTPError'
         "500":
           description: Erro Interno do Servidor
           schema:
             $ref: '#/definitions/HTTPError'
+      security:
+      - Bearer: []
       summary: Busca todos os Tenants
       tags:
       - Tenants
     post:
       consumes:
       - application/json
-      description: Adiciona um novo Tenant ao sistema
+      description: Adiciona um novo Tenant ao sistema com API Key gerada automaticamente
+        (requer permissão de administração)
       parameters:
       - description: Informações do Tenant
         in: body
@@ -334,17 +395,27 @@ paths:
       - application/json
       responses:
         "201":
-          description: Tenant Criado
+          description: Tenant Criado com API Key
           schema:
             $ref: '#/definitions/Tenant'
         "400":
           description: Erro de Formato de Solicitação
           schema:
             $ref: '#/definitions/HTTPError'
+        "401":
+          description: Token não fornecido ou inválido
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Permissão negada
+          schema:
+            $ref: '#/definitions/HTTPError'
         "500":
           description: Erro Interno do Servidor
           schema:
             $ref: '#/definitions/HTTPError'
+      security:
+      - Bearer: []
       summary: Cria um novo Tenant
       tags:
       - Tenants
@@ -352,9 +423,10 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Exclui um Tenant com base no ID fornecido
+      description: Exclui um Tenant com base no ID fornecido (requer permissão de
+        administração)
       parameters:
-      - description: Tenant ID
+      - description: Tenant ID (UUID)
         in: path
         name: id
         required: true
@@ -370,19 +442,29 @@ paths:
           description: ID Inválido
           schema:
             $ref: '#/definitions/HTTPError'
+        "401":
+          description: Token não fornecido ou inválido
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Permissão negada
+          schema:
+            $ref: '#/definitions/HTTPError'
         "500":
           description: Erro Interno do Servidor
           schema:
             $ref: '#/definitions/HTTPError'
+      security:
+      - Bearer: []
       summary: Exclui um Tenant
       tags:
       - Tenants
     get:
       consumes:
       - application/json
-      description: Busca Tenant por ID
+      description: Busca Tenant por ID (requer permissão de administração)
       parameters:
-      - description: Tenant ID
+      - description: Tenant ID (UUID)
         in: path
         name: id
         required: true
@@ -391,17 +473,27 @@ paths:
       - application/json
       responses:
         "200":
-          description: Tenant
+          description: Tenant encontrado
           schema:
             $ref: '#/definitions/Tenant'
         "400":
           description: Invalid UUID format
           schema:
             $ref: '#/definitions/HTTPError'
+        "401":
+          description: Token não fornecido ou inválido
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Permissão negada
+          schema:
+            $ref: '#/definitions/HTTPError'
         "404":
           description: Tenant not found
           schema:
             $ref: '#/definitions/HTTPError'
+      security:
+      - Bearer: []
       summary: Busca Tenant por ID
       tags:
       - Tenants
@@ -409,47 +501,64 @@ paths:
       consumes:
       - application/json
       description: Atualiza parcialmente um Tenant existente com base no ID fornecido
+        (PATCH) (requer permissão de administração)
       parameters:
-      - description: Tenant ID
+      - description: Tenant ID (UUID)
         in: path
         name: id
         required: true
         type: string
-      - description: Dados atualizáveis do Tenant
+      - description: Campos a serem atualizados (JSON parcial)
         in: body
         name: tenant
         required: true
         schema:
-          $ref: '#/definitions/Tenant'
+          additionalProperties: true
+          type: object
       produces:
       - application/json
       responses:
         "200":
-          description: Mensagem de sucesso
+          description: Tenant Atualizado
           schema:
-            $ref: '#/definitions/H'
+            $ref: '#/definitions/Tenant'
         "400":
           description: ID Inválido ou Erro de Formato de Solicitação
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Token não fornecido ou inválido
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Permissão negada
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Tenant not found
           schema:
             $ref: '#/definitions/HTTPError'
         "500":
           description: Erro Interno do Servidor
           schema:
             $ref: '#/definitions/HTTPError'
+      security:
+      - Bearer: []
       summary: Atualiza parcialmente um Tenant existente
       tags:
       - Tenants
     put:
       consumes:
       - application/json
-      description: Atualiza um Tenant existente com base no ID fornecido
+      description: Atualiza completamente um Tenant existente com base no ID fornecido
+        (PUT) (requer permissão de administração)
       parameters:
-      - description: Tenant ID
+      - description: Tenant ID (UUID)
         in: path
         name: id
         required: true
         type: string
-      - description: Dados do Tenant
+      - description: Dados completos do Tenant
         in: body
         name: tenant
         required: true
@@ -466,10 +575,24 @@ paths:
           description: ID Inválido ou Erro de Formato de Solicitação
           schema:
             $ref: '#/definitions/HTTPError'
+        "401":
+          description: Token não fornecido ou inválido
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "403":
+          description: Permissão negada
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: Tenant not found
+          schema:
+            $ref: '#/definitions/HTTPError'
         "500":
           description: Erro Interno do Servidor
           schema:
             $ref: '#/definitions/HTTPError'
+      security:
+      - Bearer: []
       summary: Atualiza um Tenant existente
       tags:
       - Tenants
@@ -477,7 +600,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Busca todos os Users
+      description: Busca todos os Users do tenant autenticado
       produces:
       - application/json
       responses:
@@ -487,17 +610,23 @@ paths:
             items:
               $ref: '#/definitions/User'
             type: array
+        "401":
+          description: Token não fornecido ou inválido
+          schema:
+            $ref: '#/definitions/HTTPError'
         "500":
           description: Erro Interno do Servidor
           schema:
             $ref: '#/definitions/HTTPError'
+      security:
+      - Bearer: []
       summary: Busca todos os Users
       tags:
       - Users
     post:
       consumes:
       - application/json
-      description: Adiciona um novo User ao sistema
+      description: Adiciona um novo User ao sistema no tenant autenticado
       parameters:
       - description: Informações do User
         in: body
@@ -516,10 +645,16 @@ paths:
           description: Erro de Formato de Solicitação
           schema:
             $ref: '#/definitions/HTTPError'
+        "401":
+          description: Token não fornecido ou inválido
+          schema:
+            $ref: '#/definitions/HTTPError'
         "500":
           description: Erro Interno do Servidor
           schema:
             $ref: '#/definitions/HTTPError'
+      security:
+      - Bearer: []
       summary: Cria um novo User
       tags:
       - Users
@@ -527,9 +662,9 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Exclui um User com base no ID fornecido
+      description: Exclui um User com base no ID fornecido do tenant autenticado
       parameters:
-      - description: User ID
+      - description: User ID (UUID)
         in: path
         name: id
         required: true
@@ -545,19 +680,25 @@ paths:
           description: ID Inválido
           schema:
             $ref: '#/definitions/HTTPError'
+        "401":
+          description: Token não fornecido ou inválido
+          schema:
+            $ref: '#/definitions/HTTPError'
         "500":
           description: Erro Interno do Servidor
           schema:
             $ref: '#/definitions/HTTPError'
+      security:
+      - Bearer: []
       summary: Exclui um User
       tags:
       - Users
     get:
       consumes:
       - application/json
-      description: Busca User por ID
+      description: Busca User por ID do tenant autenticado
       parameters:
-      - description: User ID
+      - description: User ID (UUID)
         in: path
         name: id
         required: true
@@ -566,17 +707,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: User
+          description: User encontrado
           schema:
             $ref: '#/definitions/User'
         "400":
           description: Invalid UUID format
           schema:
             $ref: '#/definitions/HTTPError'
+        "401":
+          description: Token não fornecido ou inválido
+          schema:
+            $ref: '#/definitions/HTTPError'
         "404":
           description: User not found
           schema:
             $ref: '#/definitions/HTTPError'
+      security:
+      - Bearer: []
       summary: Busca User por ID
       tags:
       - Users
@@ -584,47 +731,60 @@ paths:
       consumes:
       - application/json
       description: Atualiza parcialmente um User existente com base no ID fornecido
+        (PATCH)
       parameters:
-      - description: User ID
+      - description: User ID (UUID)
         in: path
         name: id
         required: true
         type: string
-      - description: Dados atualizáveis do User
+      - description: Campos a serem atualizados (JSON parcial)
         in: body
         name: user
         required: true
         schema:
-          $ref: '#/definitions/User'
+          additionalProperties: true
+          type: object
       produces:
       - application/json
       responses:
         "200":
-          description: Mensagem de sucesso
+          description: User Atualizado
           schema:
-            $ref: '#/definitions/H'
+            $ref: '#/definitions/User'
         "400":
           description: ID Inválido ou Erro de Formato de Solicitação
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "401":
+          description: Token não fornecido ou inválido
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: User not found
           schema:
             $ref: '#/definitions/HTTPError'
         "500":
           description: Erro Interno do Servidor
           schema:
             $ref: '#/definitions/HTTPError'
+      security:
+      - Bearer: []
       summary: Atualiza parcialmente um User existente
       tags:
       - Users
     put:
       consumes:
       - application/json
-      description: Atualiza um User existente com base no ID fornecido
+      description: Atualiza completamente um User existente com base no ID fornecido
+        (PUT)
       parameters:
-      - description: User ID
+      - description: User ID (UUID)
         in: path
         name: id
         required: true
         type: string
-      - description: Dados do User
+      - description: Dados completos do User
         in: body
         name: user
         required: true
@@ -641,13 +801,60 @@ paths:
           description: ID Inválido ou Erro de Formato de Solicitação
           schema:
             $ref: '#/definitions/HTTPError'
+        "401":
+          description: Token não fornecido ou inválido
+          schema:
+            $ref: '#/definitions/HTTPError'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/HTTPError'
         "500":
           description: Erro Interno do Servidor
           schema:
             $ref: '#/definitions/HTTPError'
+      security:
+      - Bearer: []
       summary: Atualiza um User existente
       tags:
       - Users
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Verifica o status de saúde da aplicação e suas dependências (PostgreSQL
+        e Redis)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Sistema saudável - status: ok'
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: 'Sistema degradado - status: degraded (algum serviço indisponível)'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Health check da aplicação
+      tags:
+      - System
+  /metrics:
+    get:
+      consumes:
+      - application/json
+      description: Expõe métricas da aplicação no formato Prometheus para scraping
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Métricas Prometheus em formato texto
+          schema:
+            type: string
+      summary: Métricas Prometheus
+      tags:
+      - System
 securityDefinitions:
   Bearer:
     in: header

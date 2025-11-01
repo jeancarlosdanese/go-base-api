@@ -12,7 +12,7 @@ const docTemplate = `{
         "termsOfService": "https://github.com/jeancarlosdanese/go-base-api/blob/main/LICENSE",
         "contact": {
             "name": "Go Base API Support",
-            "url": "https://github.com/jeancarlosdanese/go-base-api"
+            "url": "https://github.com/jeancarlosdanese/go-base-api/go-api"
         },
         "license": {
             "name": "MIT",
@@ -60,7 +60,7 @@ const docTemplate = `{
         },
         "/api/v1/auth/login": {
             "post": {
-                "description": "Loga um usuário usando email e senha",
+                "description": "Loga um usuário usando email e senha. Retorna access token e refresh token",
                 "consumes": [
                     "application/x-www-form-urlencoded"
                 ],
@@ -85,18 +85,32 @@ const docTemplate = `{
                         "name": "password",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Origem da requisição (ex: localhost, example.com)",
+                        "name": "Origin",
+                        "in": "header"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Token gerado com sucesso",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/Token"
                         }
                     },
                     "400": {
-                        "description": "Erro de autenticação",
+                        "description": "Erro de autenticação - parâmetros inválidos ou origem não fornecida",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Credenciais inválidas",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -109,7 +123,7 @@ const docTemplate = `{
         },
         "/api/v1/auth/refresh": {
             "post": {
-                "description": "Renova o token usando o refreshToken",
+                "description": "Renova o access token usando o refresh token. Retorna novos access token e refresh token",
                 "consumes": [
                     "application/x-www-form-urlencoded"
                 ],
@@ -123,7 +137,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Refresh Token",
+                        "description": "Refresh Token válido",
                         "name": "refreshToken",
                         "in": "formData",
                         "required": true
@@ -133,12 +147,20 @@ const docTemplate = `{
                     "200": {
                         "description": "Token renovado com sucesso",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/Token"
                         }
                     },
                     "400": {
-                        "description": "Erro de autenticação",
+                        "description": "Parâmetros inválidos",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token inválido ou expirado",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -151,7 +173,12 @@ const docTemplate = `{
         },
         "/api/v1/tenants": {
             "get": {
-                "description": "Busca todos os Tenants",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Busca todos os Tenants (requer permissão de administração)",
                 "consumes": [
                     "application/json"
                 ],
@@ -172,6 +199,18 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Token não fornecido ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Permissão negada",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
@@ -181,7 +220,12 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Adiciona um novo Tenant ao sistema",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Adiciona um novo Tenant ao sistema com API Key gerada automaticamente (requer permissão de administração)",
                 "consumes": [
                     "application/json"
                 ],
@@ -205,13 +249,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Tenant Criado",
+                        "description": "Tenant Criado com API Key",
                         "schema": {
                             "$ref": "#/definitions/Tenant"
                         }
                     },
                     "400": {
                         "description": "Erro de Formato de Solicitação",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "401": {
+                        "description": "Token não fornecido ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Permissão negada",
                         "schema": {
                             "$ref": "#/definitions/HTTPError"
                         }
@@ -227,7 +283,12 @@ const docTemplate = `{
         },
         "/api/v1/tenants/{id}": {
             "get": {
-                "description": "Busca Tenant por ID",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Busca Tenant por ID (requer permissão de administração)",
                 "consumes": [
                     "application/json"
                 ],
@@ -241,7 +302,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Tenant ID",
+                        "description": "Tenant ID (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -249,13 +310,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Tenant",
+                        "description": "Tenant encontrado",
                         "schema": {
                             "$ref": "#/definitions/Tenant"
                         }
                     },
                     "400": {
                         "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "401": {
+                        "description": "Token não fornecido ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Permissão negada",
                         "schema": {
                             "$ref": "#/definitions/HTTPError"
                         }
@@ -269,7 +342,12 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Atualiza um Tenant existente com base no ID fornecido",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Atualiza completamente um Tenant existente com base no ID fornecido (PUT) (requer permissão de administração)",
                 "consumes": [
                     "application/json"
                 ],
@@ -283,13 +361,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Tenant ID",
+                        "description": "Tenant ID (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Dados do Tenant",
+                        "description": "Dados completos do Tenant",
                         "name": "tenant",
                         "in": "body",
                         "required": true,
@@ -311,6 +389,24 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
+                    "401": {
+                        "description": "Token não fornecido ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Permissão negada",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
@@ -320,7 +416,12 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Exclui um Tenant com base no ID fornecido",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Exclui um Tenant com base no ID fornecido (requer permissão de administração)",
                 "consumes": [
                     "application/json"
                 ],
@@ -334,7 +435,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Tenant ID",
+                        "description": "Tenant ID (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -353,6 +454,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
+                    "401": {
+                        "description": "Token não fornecido ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Permissão negada",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
@@ -362,7 +475,12 @@ const docTemplate = `{
                 }
             },
             "patch": {
-                "description": "Atualiza parcialmente um Tenant existente com base no ID fornecido",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Atualiza parcialmente um Tenant existente com base no ID fornecido (PATCH) (requer permissão de administração)",
                 "consumes": [
                     "application/json"
                 ],
@@ -376,30 +494,49 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Tenant ID",
+                        "description": "Tenant ID (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Dados atualizáveis do Tenant",
+                        "description": "Campos a serem atualizados (JSON parcial)",
                         "name": "tenant",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Tenant"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Mensagem de sucesso",
+                        "description": "Tenant Atualizado",
                         "schema": {
-                            "$ref": "#/definitions/H"
+                            "$ref": "#/definitions/Tenant"
                         }
                     },
                     "400": {
                         "description": "ID Inválido ou Erro de Formato de Solicitação",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "401": {
+                        "description": "Token não fornecido ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "403": {
+                        "description": "Permissão negada",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found",
                         "schema": {
                             "$ref": "#/definitions/HTTPError"
                         }
@@ -415,7 +552,12 @@ const docTemplate = `{
         },
         "/api/v1/users": {
             "get": {
-                "description": "Busca todos os Users",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Busca todos os Users do tenant autenticado",
                 "consumes": [
                     "application/json"
                 ],
@@ -436,6 +578,12 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Token não fornecido ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
@@ -445,7 +593,12 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Adiciona um novo User ao sistema",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Adiciona um novo User ao sistema no tenant autenticado",
                 "consumes": [
                     "application/json"
                 ],
@@ -480,6 +633,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
+                    "401": {
+                        "description": "Token não fornecido ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
@@ -491,7 +650,12 @@ const docTemplate = `{
         },
         "/api/v1/users/{id}": {
             "get": {
-                "description": "Busca User por ID",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Busca User por ID do tenant autenticado",
                 "consumes": [
                     "application/json"
                 ],
@@ -505,7 +669,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "description": "User ID (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -513,13 +677,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "User",
+                        "description": "User encontrado",
                         "schema": {
                             "$ref": "#/definitions/User"
                         }
                     },
                     "400": {
                         "description": "Invalid UUID format",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "401": {
+                        "description": "Token não fornecido ou inválido",
                         "schema": {
                             "$ref": "#/definitions/HTTPError"
                         }
@@ -533,7 +703,12 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Atualiza um User existente com base no ID fornecido",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Atualiza completamente um User existente com base no ID fornecido (PUT)",
                 "consumes": [
                     "application/json"
                 ],
@@ -547,13 +722,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "description": "User ID (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Dados do User",
+                        "description": "Dados completos do User",
                         "name": "user",
                         "in": "body",
                         "required": true,
@@ -575,6 +750,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
+                    "401": {
+                        "description": "Token não fornecido ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
@@ -584,7 +771,12 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Exclui um User com base no ID fornecido",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Exclui um User com base no ID fornecido do tenant autenticado",
                 "consumes": [
                     "application/json"
                 ],
@@ -598,7 +790,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "description": "User ID (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -617,6 +809,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
+                    "401": {
+                        "description": "Token não fornecido ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
@@ -626,7 +824,12 @@ const docTemplate = `{
                 }
             },
             "patch": {
-                "description": "Atualiza parcialmente um User existente com base no ID fornecido",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Atualiza parcialmente um User existente com base no ID fornecido (PATCH)",
                 "consumes": [
                     "application/json"
                 ],
@@ -640,26 +843,27 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "description": "User ID (UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Dados atualizáveis do User",
+                        "description": "Campos a serem atualizados (JSON parcial)",
                         "name": "user",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/User"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Mensagem de sucesso",
+                        "description": "User Atualizado",
                         "schema": {
-                            "$ref": "#/definitions/H"
+                            "$ref": "#/definitions/User"
                         }
                     },
                     "400": {
@@ -668,10 +872,76 @@ const docTemplate = `{
                             "$ref": "#/definitions/HTTPError"
                         }
                     },
+                    "401": {
+                        "description": "Token não fornecido ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/HTTPError"
+                        }
+                    },
                     "500": {
                         "description": "Erro Interno do Servidor",
                         "schema": {
                             "$ref": "#/definitions/HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Verifica o status de saúde da aplicação e suas dependências (PostgreSQL e Redis)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "Health check da aplicação",
+                "responses": {
+                    "200": {
+                        "description": "Sistema saudável - status: ok",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "503": {
+                        "description": "Sistema degradado - status: degraded (algum serviço indisponível)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/metrics": {
+            "get": {
+                "description": "Expõe métricas da aplicação no formato Prometheus para scraping",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "Métricas Prometheus",
+                "responses": {
+                    "200": {
+                        "description": "Métricas Prometheus em formato texto",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }
@@ -916,6 +1186,55 @@ const docTemplate = `{
                 }
             }
         },
+        "Token": {
+            "type": "object",
+            "properties": {
+                "policies": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "refreshToken": {
+                    "type": "string"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "token": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/TokenUser"
+                }
+            }
+        },
+        "TokenUser": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "thumbnail": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "User": {
             "type": "object",
             "properties": {
@@ -997,12 +1316,12 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "0.0.7",
+	Version:          "1.0.0",
 	Host:             "http://localhost:5001",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Swagger Go Base API",
-	Description:      "This is a Go Base API.",
+	Title:            "Go Base API",
+	Description:      "API REST base com autenticação JWT, RBAC (Casbin), multi-tenancy, rate limiting (Redis) e métricas Prometheus. Template completo para desenvolvimento de APIs Go com arquitetura limpa.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
